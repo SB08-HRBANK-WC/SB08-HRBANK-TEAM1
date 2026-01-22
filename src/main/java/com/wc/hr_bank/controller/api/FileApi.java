@@ -14,30 +14,27 @@ import org.springframework.http.ResponseEntity;
 @Tag(name = "파일 관리", description = "파일 관리 API")
 public interface FileApi
 {
-    @Operation(
-            summary = "파일을 다운로드",
-            description = "파일을 다운로드합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200", description = "다운로드 성공",
-                    content = @Content(mediaType = "application/octet-stream")
-            ),
-            @ApiResponse(
-                    responseCode = "404", description = "파일을 찾을 수 없음"
-            ),
-            @ApiResponse(
-                    responseCode = "500", description = "서버 오류"
-            )
-    })
-    ResponseEntity<Resource> download(
-            @Parameter(
-                    name = "id",
-                    description = "파일 ID",
-                    required = true,
-                    in = ParameterIn.PATH,
-                    schema = @Schema(implementation = Long.class)
-            )
-            Long id
-    );
+  @Operation(summary = "파일을 다운로드", description = "파일을 다운로드합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200", description = "다운로드 성공",
+          content = @Content(mediaType = "application/octet-stream")
+      ),
+      @ApiResponse(
+          responseCode = "404", description = "파일을 찾을 수 없음"
+      ),
+      @ApiResponse(
+          responseCode = "500", description = "서버 오류"
+      )
+  })
+  ResponseEntity<Resource> download(
+      @Parameter(
+          name = "id",
+          description = "파일 ID",
+          required = true,
+          in = ParameterIn.PATH,
+          schema = @Schema(implementation = Long.class)
+      )
+      Long id
+  );
 }

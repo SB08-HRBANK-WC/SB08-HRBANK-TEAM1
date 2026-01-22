@@ -8,5 +8,5 @@ import org.springframework.core.io.Resource;
 @Mapper(componentModel = "spring")
 public interface FileMapper
 {
-    FileDto toFileDto(File file, Resource resource);
+  FileDto toFileDto(File file, Resource resource);
 }
