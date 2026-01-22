@@ -19,13 +19,14 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/files")
-public class FileController implements FileApi
-{
+public class FileController implements FileApi {
+
   private final FileService fileService;
 
   @Override
   @GetMapping("/{id}/download")
-  public ResponseEntity<Resource> download(@PathVariable Long id) {
+  public ResponseEntity<Resource> download(@PathVariable Long id)
+  {
     FileDto fileDto = fileService.fileDownload(id);
 
     /**
