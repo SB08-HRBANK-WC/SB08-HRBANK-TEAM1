@@ -47,9 +47,11 @@ public class Employee extends BaseUpdatableEntity
     /**
      * 비즈니스 로직: 직원 정보 수정 (사원 번호 제외)
      * 이 메서드 호출 후 EmployeeHistory를 생성하는 로직을 Service에 작성합니다.
+     *
      */
     public void updateEmployee(String name, String email, String jobTitle,
-                               EmployeeStatus status, Department department, File profileImage) {
+                               EmployeeStatus status, Department department, File profileImage)
+    {
         this.name = name;
         this.email = email;
         this.jobTitle = jobTitle;

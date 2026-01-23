@@ -1,5 +1,8 @@
 package com.wc.hr_bank.repository;
 
-public interface FileRepository
+import com.wc.hr_bank.entity.File;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface FileRepository extends JpaRepository<File, Long>
 {
 }
