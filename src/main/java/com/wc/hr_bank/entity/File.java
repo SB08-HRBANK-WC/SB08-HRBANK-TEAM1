@@ -24,5 +24,12 @@ public class File extends BaseUpdatableEntity
 
     @Column(name = "file_path", nullable = false)
     private String filePath;
+
+    public void update(String fileName, String contentType, Long fileSize, String filePath) {
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
+        this.filePath = filePath;
+    }
 }
 

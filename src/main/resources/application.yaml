@@ -28,6 +28,6 @@ logging:
 # ?? ?? ?? ??
 hr-bank:
   file_directories:
-    profiles: .profiles
-    backups: .backups
-    logs: .logs
+    profiles: ./profiles
+    backups: ./backups
+    logs: ./logs
