@@ -2,17 +2,22 @@ package com.wc.hr_bank.service.impl;
 
 
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
+import com.wc.hr_bank.entity.ChangeLog;
+import com.wc.hr_bank.entity.ChangeType;
 import com.wc.hr_bank.entity.Employee;
+import com.wc.hr_bank.entity.LogPropertyType;
 import com.wc.hr_bank.mapper.ChangeLogMapper;
 import com.wc.hr_bank.repository.ChangeLogRepository;
 import com.wc.hr_bank.service.ChangeLogService;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Objects;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 @RequiredArgsConstructor
 public class ChangeLogServiceImpl implements ChangeLogService
 {
@@ -26,6 +31,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @return    상세 조회 DTO
    */
   @Override
+  @Transactional(readOnly = true)
   public ChangeLogDetailDto getChangeLogDetail(Long id) {
     return changeLogRepository.findWithDiffsById(id)
         .map(changeLogMapper::toDto)
@@ -42,27 +48,11 @@ public class ChangeLogServiceImpl implements ChangeLogService
   public void recordRegistration(Employee employee, String ip, String memo) {
   }
 
-  /**
-   * 직원 수정 (수정 이력)
-   * @param oldEmployee
-   * @param newEmployee
-   * @param ip
-   * @param memo
-   */
   @Override
-  public void recordModification(Employee oldEmployee, Employee newEmployee, String ip,
-      String memo) {
-
+  public void recordModification(Employee oldEmp, Employee newEmp, String ip, String memo) {
   }
 
-  /**
-   * 직원 삭제 (수정 이력)
-   * @param employee
-   * @param ip
-   * @param memo
-   */
   @Override
   public void recordRemoval(Employee employee, String ip, String memo) {
-
   }
 }
