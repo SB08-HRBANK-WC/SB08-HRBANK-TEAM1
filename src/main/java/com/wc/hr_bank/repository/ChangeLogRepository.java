@@ -20,6 +20,6 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long>
       @Param("end") Instant end
   );
 
-  @Query("SELECT cl FROM ChangeLog cl ORDER BY cl.updatedAt DESC LIMIT 1")
-  Instant findTopByOrderByUpdatedAtDesc();
+//  @Query("SELECT cl FROM ChangeLog cl ORDER BY cl.updatedAt DESC LIMIT 1")
+//  Instant findTopByOrderByUpdatedAtDesc();
 }
