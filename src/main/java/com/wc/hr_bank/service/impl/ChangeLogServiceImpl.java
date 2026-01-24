@@ -12,6 +12,9 @@ import com.wc.hr_bank.mapper.ChangeLogMapper;
 import com.wc.hr_bank.repository.ChangeLogRepository;
 import com.wc.hr_bank.service.ChangeLogService;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChangeLogServiceImpl implements ChangeLogService
 {
@@ -29,16 +32,29 @@ public class ChangeLogServiceImpl implements ChangeLogService
 
   /**
    * 특정 이력 상세 정보 조회
-   *
    * @param id  이력 ID
    * @return    상세 조회 DTO
    */
   @Override
-  @Transactional(readOnly = true)
   public ChangeLogDetailDto getChangeLogDetail(Long id) {
     return changeLogRepository.findWithDiffsById(id)
         .map(changeLogMapper::toDto)
         .orElseThrow(() -> new EntityNotFoundException("해당 이력을 찾을 수 없습니다."));
+  }
+
+  /**
+   * 기간 별 수정 이력 개수 조회
+   * @param from
+   * @param to
+   * @return
+   */
+  @Override
+  public Long countByPeriod(LocalDateTime from, LocalDateTime to) {
+    // LocalDateTime -> Instant
+    Instant fromInstant = from.atZone(ZoneId.of("Asia/Seoul")).toInstant();
+    Instant toInstant = to.atZone(ZoneId.of("Asia/Seoul")).toInstant();
+
+    return changeLogRepository.countLogsByPeriod(fromInstant, toInstant);
   }
 
   /**
@@ -48,8 +64,9 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @param memo
    */
   @Override
+  @Transactional
   public void recordRegistration(Employee e, String ip, String memo) {
-    processRecording(null, e, ip, memo, ChangeType.UPDATED);
+    processRecording(null, e, ip, memo, ChangeType.CREATED);
   }
 
   /**
@@ -60,6 +77,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @param memo
    */
   @Override
+  @Transactional
   public void recordModification(Employee oldEmp, Employee newEmp, String ip, String memo) {
     processRecording(oldEmp, newEmp, ip, memo, ChangeType.UPDATED);
   }
@@ -71,6 +89,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @param memo
    */
   @Override
+  @Transactional
   public void recordRemoval(Employee e, String ip, String memo) {
     processRecording(e, null, ip, memo, ChangeType.DELETED);
   }
