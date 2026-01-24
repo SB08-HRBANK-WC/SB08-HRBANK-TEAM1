@@ -2,10 +2,11 @@ package com.wc.hr_bank.storage;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 
 public interface FileStorage
 {
-
   /**
    * 파일을 먼저 생성,저장한 후, OutputStream을 연결시킵니다.
    * 
@@ -23,4 +24,12 @@ public interface FileStorage
    * @return
    */
   InputStream get(Long id, String extension);
+
+  /**
+   * 파일을 다운로드 합니다.
+   *
+   * @param id
+   * @return
+   */
+  ResponseEntity<Resource> download(Long id);
 }

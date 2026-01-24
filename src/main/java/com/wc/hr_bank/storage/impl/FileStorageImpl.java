@@ -1,6 +1,8 @@
 package com.wc.hr_bank.storage.impl;
 
+import com.wc.hr_bank.entity.File;
 import com.wc.hr_bank.global.config.FileConfig;
+import com.wc.hr_bank.repository.FileRepository;
 import com.wc.hr_bank.storage.FileStorage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,16 +12,19 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class FileStorageImpl implements FileStorage
 {
-
+  // 허용할 이미지 파일 종류.
+  private final List<String> allowedImages = new ArrayList<>(List.of(".jpg", ".png", ".jpeg", ".webp"));
+  // 환경설정으로 설정한 경로를 가져오기 위함
   private final FileConfig fileConfig;
-  // 허용할 이미지 파일 종류
-  private final List<String> allowedExtensions = new ArrayList<>(List.of(".jpg", ".png", ".jpeg"));
+  private FileRepository fileRepository;
 
   @Override
   public OutputStream save(Long id, String extension) {
@@ -43,14 +48,33 @@ public class FileStorageImpl implements FileStorage
     }
   }
 
+  @Override
+  public ResponseEntity<Resource> download(Long id) {
+    File findFile = fileRepository.findById(id)
+        .orElseThrow(()-> new IllegalArgumentException("DB에서 해당 ID로 된 File을 찾을 수 없습니다. ID: " + id));
+
+    /**
+     * 컨텐츠 타입 = 저장 위치
+     * text/csv = ./backups
+     * text/plain = ./logs
+     * image/jpg = ./profiles
+     * image/jpeg = ./profiles
+     * image/png = ./profiles
+     * image/webp = ./profiles
+     */
+
+    return null;
+  }
+
   /**
+   * Helper
    * 확장자에 따라 디렉토리 경로를 결정하는 공통 로직
    */
   private Path resolvePath(Long id, String extension) {
     String lowerExt = extension.toLowerCase();
     String fileName = id + lowerExt;
 
-    if (allowedExtensions.contains(lowerExt)) {
+    if (allowedImages.contains(lowerExt)) {
       // 이미지 확장자 검증
       return fileConfig.getProfilePath().resolve(fileName);
     } else if (lowerExt.equals(".csv")) {

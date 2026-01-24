@@ -20,12 +20,8 @@ public interface FileApi
           responseCode = "200", description = "다운로드 성공",
           content = @Content(mediaType = "application/octet-stream")
       ),
-      @ApiResponse(
-          responseCode = "404", description = "파일을 찾을 수 없음"
-      ),
-      @ApiResponse(
-          responseCode = "500", description = "서버 오류"
-      )
+      @ApiResponse(responseCode = "404", description = "파일을 찾을 수 없음"),
+      @ApiResponse(responseCode = "500", description = "서버 오류")
   })
   ResponseEntity<Resource> download(
       @Parameter(
