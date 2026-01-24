@@ -2,6 +2,7 @@ package com.wc.hr_bank.service;
 
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
 import com.wc.hr_bank.entity.Employee;
+import java.time.LocalDateTime;
 
 public interface ChangeLogService
 {
@@ -11,6 +12,14 @@ public interface ChangeLogService
    * @return
    */
   ChangeLogDetailDto getChangeLogDetail(Long id);
+
+  /**
+   * 기간 별 수정 이력 개수 조회
+   * @param from
+   * @param to
+   * @return
+   */
+  Long countByPeriod(LocalDateTime from, LocalDateTime to);
 
   /**
    * 직원 생성 (수정 이력 추가)
