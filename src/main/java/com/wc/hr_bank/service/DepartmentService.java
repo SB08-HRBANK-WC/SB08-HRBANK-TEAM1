@@ -26,4 +26,16 @@ public interface DepartmentService
      *
      */
     DepartmentDto getDepartmentById(Long id);
+
+    /**
+     * 부서 수정,
+     *
+     */
+    DepartmentDto updateDepartment(Long id, DepartmentRequest request);
+
+    /**
+     * 부서 삭제,
+     *
+     */
+    void deleteDepartment(Long id);
 }
