@@ -11,11 +11,13 @@ import com.wc.hr_bank.repository.ChangeLogRepository;
 import com.wc.hr_bank.repository.EmployeeRepository;
 import com.wc.hr_bank.repository.FileRepository;
 import com.wc.hr_bank.service.BackupService;
+import com.wc.hr_bank.storage.FileStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -46,14 +49,51 @@ public class BackupServiceImpl implements BackupService
     private final BackupMapper backupMapper;
 
     /**
-     * 백업 이력 등록,
+     * 특정 상태의 가장 최근 백업 정보를 조회,
+     * 상태를 특정하지 않으면 COMPLETED
      *
-     * @param httpServletRequest 서블릿 요청 객체
-     * @return BackupDto
+     * @param status 특정 상태
+     * @return 가장 최근 백업 정보
+     */
+    @Override
+    public BackupDto getLatest(StatusType status) {
+        StatusType targetStatus = (status != null) ? status : StatusType.COMPLETE;
+
+        return backupRepository.findLatestByStatus(targetStatus)
+                .map(backupMapper::toDto)
+                .orElseThrow(NoSuchElementException::new);
+    }
+
+    /**
+     * API 요청에 의한 데이터 백업,
+     *
+     * @param httpServletRequest HTTP 요청 객체
+     * @return 백업 결과 DTO
      */
     @Override
     public BackupDto createBackup(HttpServletRequest httpServletRequest) {
         String worker = extractIpAddress(httpServletRequest);
+        return executeBackup(worker);
+    }
+
+    /**
+     * 배치에 의한 데이터 백업 (1시간 간격),
+     *
+     * @return 백업 결과 DTO
+     */
+    @Override
+    @Scheduled(cron = "${backup.batch.schedule.cron:0 0 * * * *}") // 간단하고 짧아서 따로 분리하지 않음.
+    public BackupDto batchBackup() {
+        return executeBackup("system");
+    }
+
+    /**
+     * 백업 실행 공통 로직,
+     *
+     * @param worker 작업자 (IP or "system")
+     * @return 백업 결과 DTO
+     */
+    private BackupDto executeBackup(String worker) {
         Instant now = Instant.now();
 
         // STEP 1: 백업 여부 판단
@@ -88,9 +128,9 @@ public class BackupServiceImpl implements BackupService
      * 페이징: 구현 간단/대용량 데이터에서 비효율적
      * 스트리밍: 메모리 효율 좋음/트랜잭션 관리 복잡
      *
-     * @param startedAt 작업 시작시간
-     * @param backup 백업하려는 백업 인스턴스
-     * @return 백업 파일
+     * @param startedAt 백업 시작 시간
+     * @param backup 백업하려는 백업 엔티티
+     * @return 파일 엔티티
      */
     private File performBackupStream(Backup backup, Instant startedAt) throws IOException {
         // 임시 엔티티 (임시 정보로 먼저 저장 -> ID 획득 -> 물리적 파일 생성 -> 최종 정보로 업데이트)
@@ -142,6 +182,7 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 백업 실패,
+     * 백업이 실패하면 기존의 .csv파일을 삭제한 뒤 에러 로그 파일을 생성한다.
      *
      * @param backup 백업 인스턴스
      */
@@ -186,6 +227,7 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 백업 성공,
+     * 백업에 성공하면 백업 엔티티의 상태를 변경해준다.
      *
      * @param backup 백업 인스턴스
      * @param file .csv 파일
@@ -200,7 +242,7 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 백업 필요 여부를 판단,
-     * 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주
+     * 가장 최근 완료된 배치 작업 시간(EndedAt) 이후(isAfter) 직원 데이터가 변경(UpdatedAt)된 경우에 데이터 백업이 필요한 것으로 간주
      *
      * @return 백업 여부
      */

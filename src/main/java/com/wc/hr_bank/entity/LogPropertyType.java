@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 public enum LogPropertyType
 {
   EMPLOYEE_NAME("이름"),
-  EMPLOYEE_NUMBER("사번"),
   EMAIL("이메일"),
   JOB_TITLE("직함"),
   PROFILE_IMAGE("이미지"),
