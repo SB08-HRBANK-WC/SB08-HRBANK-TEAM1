@@ -1,6 +1,6 @@
 package com.wc.hr_bank.controller;
 
-import com.wc.hr_bank.api.EmployeeApi;
+import com.wc.hr_bank.controller.api.EmployeeApi;
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;

@@ -1,12 +1,14 @@
 package com.wc.hr_bank.dto.response.employee;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 import java.time.LocalDate;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmployeeDto
+
 {
   private Long id;
   private String name;
