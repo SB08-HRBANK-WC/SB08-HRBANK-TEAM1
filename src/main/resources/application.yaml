@@ -31,3 +31,8 @@ hr-bank:
     profiles: ./profiles
     backups: ./backups
     logs: ./logs
+
+backup:
+  batch:
+    schedule:
+      cron: "0 0 * * * *"
