@@ -34,7 +34,11 @@ public class ChangeLog extends BaseUpdatableEntity
     @OneToMany(mappedBy = "changeLog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChangeLogDiff> diffs = new ArrayList<>();
 
-    public void addDiff(String fieldName, String before, String after) {
+  public static Object builder() {
+    return null;
+  }
+
+  public void addDiff(String fieldName, String before, String after) {
         ChangeLogDiff diff = new ChangeLogDiff(this, fieldName, before, after);
         this.diffs.add(diff);
     }

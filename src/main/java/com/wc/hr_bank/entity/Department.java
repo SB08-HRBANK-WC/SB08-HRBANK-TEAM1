@@ -1,6 +1,7 @@
 package com.wc.hr_bank.entity;
 
 import com.wc.hr_bank.entity.base.BaseUpdatableEntity;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -30,7 +31,11 @@ public class Department extends BaseUpdatableEntity
         this.establishedDate = establishedDate;
     }
 
-    public void update(String name, String description, LocalDate establishedDate) {
+  public static Observed builder() {
+    return null;
+  }
+
+  public void update(String name, String description, LocalDate establishedDate) {
         this.name = name;
         this.description = description;
         this.establishedDate = establishedDate;
