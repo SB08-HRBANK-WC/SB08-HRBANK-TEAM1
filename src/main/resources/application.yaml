@@ -44,6 +44,11 @@ logging:
 # 프로젝트 커스텀 설정
 hr-bank:
   file_directories:
-    profiles: .profiles
-    backups: .backups
-    logs: .logs
+    profiles: ./profiles
+    backups: ./backups
+    logs: ./logs
+
+backup:
+  batch:
+    schedule:
+      cron: "0 0 * * * *"

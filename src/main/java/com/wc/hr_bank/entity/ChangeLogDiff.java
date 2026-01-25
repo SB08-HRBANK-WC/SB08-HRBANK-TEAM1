@@ -10,25 +10,30 @@ import lombok.NoArgsConstructor;
 @Table(name = "change_log_diffs")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChangeLogDiff extends BaseEntity
+public class ChangeLogDiff
 {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
+    private Long id;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "log_id", nullable = false)
     private ChangeLog changeLog;
 
     @Column(name = "field_name", nullable = false)
-    private String fieldName;
+    private String propertyName;
 
     @Column(name = "before_value")
-    private String beforeValue;
+    private String before;
 
     @Column(name = "after_value")
-    private String afterValue;
+    private String after;
 
-    protected ChangeLogDiff(ChangeLog changeLog, String fieldName, String before, String after) {
+    protected ChangeLogDiff(ChangeLog changeLog, String propertyName, String before, String after) {
         this.changeLog = changeLog;
-        this.fieldName = fieldName;
-        this.beforeValue = before;
-        this.afterValue = after;
+        this.propertyName = propertyName;
+        this.before = before;
+        this.after = after;
     }
 }
