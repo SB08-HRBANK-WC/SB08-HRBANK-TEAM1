@@ -21,7 +21,7 @@ public class File extends BaseUpdatableEntity
   @Column(name = "file_size", nullable = false)
   private Long fileSize;
 
-  @Column(name = "file_path", nullable = false, length = 255)
+  @Column(name = "file_path", length = 255)
   private String filePath;
 
   public void update(
