@@ -39,7 +39,7 @@ public class DepartmentServiceImpl implements DepartmentService
      * @return  department dto 리스트
      */
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DepartmentDto> getAllDepartments() {
         return departmentRepository.findAll().stream()
                 .map(departmentMapper::toDto)
@@ -50,14 +50,62 @@ public class DepartmentServiceImpl implements DepartmentService
      * 특정 부서 상세 조회 메서드,
      * @param id 조회할 부서의 식별 번호
      * @return 조회된 부서의 정보가 담긴 dto
-     * @throws RuntimeException 해당 id를 가진 부서가 없으면 예외 발생
+     * @throws IllegalArgumentException 해당 id를 가진 부서가 없으면 예외 발생
      *
      */
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public DepartmentDto getDepartmentById(Long id) {
         return departmentRepository.findById(id)
                 .map(departmentMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("해당 ID의 부서를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 부서를 찾을 수 없습니다." ));
+    }
+
+    /**
+     * 부서 수정 메서드,
+     *
+     * @param id 수정할 부서의 식별 번호
+     * @param request 수정할 부서의 정보가 담긴 dto(이름, 설명, 설립일)
+     * @return 수정 완료된 부서의 정보
+     * @throws IllegalArgumentException 해당 id를 가진 부서가 없으면 예외 발생
+     */
+    @Override
+    @Transactional
+    public DepartmentDto updateDepartment(Long id, DepartmentRequest request) {
+        Department department = departmentRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("해당 부서를 찾을 수 업습니다."));
+
+        //중복 체크 로직
+        if (!department.getName().equals(request.name())) {
+            if (departmentRepository.existsByName(request.name())) {
+                throw new IllegalArgumentException("이미 사용 중인 부서 이름입니다: " + request.name());
+            }
+        }
+
+        department.update(
+            request.name(),
+            request.description(),
+            request.establishedDate()
+        );
+
+        return departmentMapper.toDto(department);
+    }
+
+    /**
+     * 부서 삭제 메서드,
+     *
+     * @param id 삭제할 부서의 식별 번호
+     * @throws IllegalArgumentException 해당 id를 가진 부서가 없으면 예외 발생
+     */
+    @Override
+    @Transactional
+    public void deleteDepartment(Long id) {
+        Department department = departmentRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("삭제하려는 부서가 존재하지 않습니다."));
+
+        //나중에 직원이 있는지 체크할 로직이 들어갈 곳임
+        //지금은 명세에 따라 부서 존재 확인 후 바로 삭제를 진행
+
+        departmentRepository.delete(department);
     }
 }
