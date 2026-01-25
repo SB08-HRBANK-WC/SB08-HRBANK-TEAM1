@@ -1,8 +1,0 @@
-POST http://localhost:8080/api/departments
-Content-Type: application/json
-
-{
-  "name": "인사팀",
-  "description": "사람을 관리하는 팀입니다.",
-  "establishedDate": "2026-01-22"
-}
