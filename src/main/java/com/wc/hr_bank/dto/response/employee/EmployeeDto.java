@@ -1,4 +1,4 @@
-package com.wc.hr_bank.dto.response.file;
+package com.wc.hr_bank.dto.response.employee;
 
 import lombok.Builder;
 import lombok.Getter;

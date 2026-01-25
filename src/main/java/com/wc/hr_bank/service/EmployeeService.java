@@ -1,7 +1,7 @@
 package com.wc.hr_bank.service;
 
-import com.wc.hr_bank.dto.request.file.EmployeeCreateRequest;
-import com.wc.hr_bank.dto.response.file.EmployeeDto;
+import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService
