@@ -11,6 +11,7 @@ import com.wc.hr_bank.repository.ChangeLogRepository;
 import com.wc.hr_bank.repository.EmployeeRepository;
 import com.wc.hr_bank.repository.FileRepository;
 import com.wc.hr_bank.service.BackupService;
+import com.wc.hr_bank.storage.FileStorage;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -45,6 +47,22 @@ public class BackupServiceImpl implements BackupService
     private @Value("${hr-bank.file_directories.logs:./logs}") String root;
 
     private final BackupMapper backupMapper;
+
+    /**
+     * 특정 상태의 가장 최근 백업 정보를 조회,
+     * 상태를 특정하지 않으면 COMPLETED
+     *
+     * @param status 특정 상태
+     * @return 가장 최근 백업 정보
+     */
+    @Override
+    public BackupDto getLatest(StatusType status) {
+        StatusType targetStatus = (status != null) ? status : StatusType.COMPLETE;
+
+        return backupRepository.findLatestByStatus(targetStatus)
+                .map(backupMapper::toDto)
+                .orElseThrow(NoSuchElementException::new);
+    }
 
     /**
      * API 요청에 의한 데이터 백업,
