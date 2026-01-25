@@ -1,7 +1,7 @@
 package com.wc.hr_bank.controller;
 
-import com.wc.hr_bank.dto.request.file.EmployeeCreateRequest;
-import com.wc.hr_bank.dto.response.file.EmployeeDto;
+import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

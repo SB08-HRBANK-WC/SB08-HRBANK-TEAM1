@@ -1,7 +1,7 @@
 package com.wc.hr_bank.service.impl;
 
-import com.wc.hr_bank.dto.request.file.EmployeeCreateRequest;
-import com.wc.hr_bank.dto.response.file.EmployeeDto;
+import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.*;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.repository.EmployeeRepository;
