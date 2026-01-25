@@ -6,4 +6,5 @@ import jakarta.servlet.http.HttpServletRequest;
 public interface BackupService
 {
     BackupDto createBackup(HttpServletRequest httpServletRequest);
+    BackupDto batchBackup();
 }
