@@ -1,12 +1,10 @@
 package com.wc.hr_bank.service;
 
-import com.wc.hr_bank.dto.request.changelog.EmployeeLogRequest;
+import com.wc.hr_bank.dto.request.changelog.ChangeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
-import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
 import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
 import com.wc.hr_bank.entity.Employee;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface ChangeLogService
 {
@@ -16,7 +14,7 @@ public interface ChangeLogService
    * @param request
    * @return
    */
-  CursorPageResponseChangeLogDto getChangeLogs(EmployeeLogRequest request);
+  CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request);
 
   /**
    * 수정 이력 상세 조회

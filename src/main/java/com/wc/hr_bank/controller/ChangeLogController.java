@@ -1,17 +1,13 @@
 package com.wc.hr_bank.controller;
 
 import com.wc.hr_bank.controller.api.ChangeLogApi;
-import com.wc.hr_bank.dto.request.changelog.EmployeeLogRequest;
+import com.wc.hr_bank.dto.request.changelog.ChangeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
-import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
 import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
 import com.wc.hr_bank.service.ChangeLogService;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,19 +22,26 @@ public class ChangeLogController implements ChangeLogApi
   private final ChangeLogService changeLogService;
 
   @Override
+  public ResponseEntity<CursorPageResponseChangeLogDto> getEmployeeLogs (@ModelAttribute ChangeLogRequest request) {
+
+    CursorPageResponseChangeLogDto changeLogs = changeLogService.getChangeLogs(request);
+
+    return ResponseEntity.ok(changeLogs);
+  }
+
+  @Override
   public ResponseEntity<ChangeLogDetailDto> getChangeLogDiffs(@PathVariable Long id) {
+
     ChangeLogDetailDto response = changeLogService.getChangeLogDetail(id);
+
     return ResponseEntity.ok(response);
   }
 
-  @GetMapping("/count")
+  @Override
   public ResponseEntity<Long> getChangeLogCount(
-      @RequestParam(required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+      @RequestParam(required = false) LocalDateTime from,
+      @RequestParam(required = false) LocalDateTime to) {
 
-      @RequestParam(required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to)
-  {
     LocalDateTime actualFrom = (from != null) ? from : LocalDateTime.now().minusDays(7);
     LocalDateTime actualTo = (to != null) ? to : LocalDateTime.now();
 
@@ -46,13 +49,4 @@ public class ChangeLogController implements ChangeLogApi
 
     return ResponseEntity.ok(count);
   }
-
-  @GetMapping
-  public ResponseEntity<CursorPageResponseChangeLogDto> getEmployeeLogs (@ModelAttribute EmployeeLogRequest request) {
-
-    CursorPageResponseChangeLogDto changeLogs = changeLogService.getChangeLogs(request);
-
-    return ResponseEntity.ok(changeLogs);
-  }
-
 }

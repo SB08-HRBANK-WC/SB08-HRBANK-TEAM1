@@ -1,7 +1,7 @@
 package com.wc.hr_bank.service.impl;
 
 
-import com.wc.hr_bank.dto.request.changelog.EmployeeLogRequest;
+import com.wc.hr_bank.dto.request.changelog.ChangeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
 import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
@@ -36,23 +36,22 @@ public class ChangeLogServiceImpl implements ChangeLogService
   private final ChangeLogRepository changeLogRepository;
   private final ChangeLogMapper changeLogMapper;
 
+  private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+
   /**
    * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
    * @param request
    * @return
    */
   @Override
-  public CursorPageResponseChangeLogDto getChangeLogs(EmployeeLogRequest request) {
+  public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request) {
     Pageable pageable = PageRequest.of(0, request.size());
 
     // 정렬 필드 - ipAddress, at
     String sortField = request.sortField();
-
     // 정렬 방향 - asc, desc
     String sortDirection = request.sortDirection();
 
-    String nextCursor = null;
-    Long nextIdAfter = 0L;
     List<ChangeLog> logs = List.of();
 
     String employeeNumber = request.employeeNumber();
@@ -77,37 +76,20 @@ public class ChangeLogServiceImpl implements ChangeLogService
             : changeLogRepository.findByAtAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable);
       }
 
-      case "ipAddress" -> {
-        yield "desc".equals(sortDirection)
+      case "ipAddress" -> "desc".equals(sortDirection)
             ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
             : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
-      }
       default -> List.of();
     };
-
 
     List<ChangeLogDto> content = logs.stream()
         .map(changeLogMapper::toLogDto)
         .toList();
 
     boolean hasNext = content.size() >= request.size();
-
-    if (!content.isEmpty()) {
-      ChangeLogDto lastItem = content.get(content.size() - 1);
-      nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
-      nextIdAfter = lastItem.id();
-    }
-
     Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
 
-    return changeLogMapper.toCursorPageResponse(
-        content,
-        nextCursor,
-        nextIdAfter,
-        request.size(),
-        totalElements,
-        hasNext
-    );
+    return buildResponse(content, sortField, request.size(), totalElements, hasNext);
   }
 
   /**
@@ -116,8 +98,40 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @return
    */
   private Instant convertToInstant(LocalDateTime datetime) {
-    Instant instant = datetime.atZone(ZoneId.systemDefault()).toInstant();
+    Instant instant = datetime.atZone(KOREA_ZONE).toInstant();
     return instant;
+  }
+
+  /**
+   * 커서 관련 헬퍼 메서드
+   * @param content
+   * @param sortField
+   * @param size
+   * @param totalElements
+   * @param hasNext
+   * @return
+   */
+  private CursorPageResponseChangeLogDto buildResponse(
+      List<ChangeLogDto> content,
+      String sortField, int size,
+      Long totalElements, boolean hasNext) {
+
+      String nextCursor = null;
+      Long nextIdAfter = 0L;
+
+      if (!content.isEmpty()) {
+        ChangeLogDto lastItem = content.get(content.size() - 1);
+        nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
+        nextIdAfter = lastItem.id();
+      }
+      return changeLogMapper.toCursorPageResponse(
+          content,
+          nextCursor,
+          nextIdAfter,
+          size,
+          totalElements,
+          hasNext
+      );
   }
 
   /**
@@ -140,10 +154,8 @@ public class ChangeLogServiceImpl implements ChangeLogService
    */
   @Override
   public Long countByPeriod(LocalDateTime from, LocalDateTime to) {
-    // LocalDateTime -> Instant
-    Instant fromInstant = from.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-    Instant toInstant = to.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-
+    Instant fromInstant = convertToInstant(from);
+    Instant toInstant = convertToInstant(to);
     return changeLogRepository.countLogsByPeriod(fromInstant, toInstant);
   }
 
