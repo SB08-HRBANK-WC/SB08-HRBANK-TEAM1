@@ -45,7 +45,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    */
   @Override
   public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request) {
-    Pageable pageable = PageRequest.of(0, request.size());
+    Pageable pageable = PageRequest.of(0, request.size() + 1);
 
     // 정렬 필드 - ipAddress, at
     String sortField = request.sortField();
@@ -82,11 +82,16 @@ public class ChangeLogServiceImpl implements ChangeLogService
       default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다: " + sortField);
     };
 
-    List<ChangeLogDto> content = logs.stream()
+    boolean hasNext = logs.size() > request.size();
+
+    List<ChangeLog> resultLogs = hasNext
+        ? logs.subList(0, request.size())
+        : logs;
+
+    List<ChangeLogDto> content = resultLogs.stream()
         .map(changeLogMapper::toLogDto)
         .toList();
 
-    boolean hasNext = content.size() >= request.size();
     Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
 
     return buildResponse(content, sortField, request.size(), totalElements, hasNext);
