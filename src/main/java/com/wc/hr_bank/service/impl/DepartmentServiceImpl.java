@@ -50,17 +50,22 @@ public class DepartmentServiceImpl implements DepartmentService
         String sortField,
         String sortDirection) {
 
-        //Pageable 생성
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String field = (sortField == null || sortField.isBlank()) ? "establishedDate" : sortField;
+        // idAfter가 없는데 cursor가 있다면 cursor를 숫자로 바꿔서 씀
+        Long effectiveIdAfter = idAfter;
+        if (effectiveIdAfter == null && cursor != null && !cursor.isBlank()) {
+            try {
+                effectiveIdAfter = Long.parseLong(cursor);
+            } catch (NumberFormatException e) {
+                //커서가 숫자가 아닌 값이 들어오면 무시하거나 에러 처리
+                effectiveIdAfter = null;
+            }
+        }
 
-        Pageable pageable = PageRequest.of(0, size, Sort.by(direction, field));
+        //Pageable 객체 생성 (No-Offset이므로 페이지는 항상 0)
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.ASC, "id"));
 
-        //검색어 null 처리
-        String keyword = (nameOrDescription == null) ? "" : nameOrDescription;
-
-        //레포지토리 호출 및 반환
-        return departmentRepository.searchByKeyword(keyword, idAfter, pageable)
+        //레포지토리 호출
+        return departmentRepository.searchByKeyword(nameOrDescription, effectiveIdAfter, pageable)
             .map(departmentMapper::toDto);
     }
 
