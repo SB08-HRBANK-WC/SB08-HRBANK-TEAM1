@@ -2,18 +2,20 @@ package com.wc.hr_bank.controller;
 
 import com.wc.hr_bank.controller.api.EmployeeApi;
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
+import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -66,6 +68,14 @@ public class EmployeeController implements EmployeeApi
   }
 
   @Override
+  public ResponseEntity<Map<String, Object>> getEmployees(String nameOrEmail, String employeeNumber,
+      String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo,
+      EmployeeStatus status, Long idAfter, String cursor, int size, String sortField,
+      String sortDirection) {
+    return null;
+  }
+
+  @Override
   @GetMapping("/{id}")
   public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id)
 
@@ -73,26 +83,15 @@ public class EmployeeController implements EmployeeApi
     return ResponseEntity.ok(employeeService.getEmployeeById(id));
   }
 
+  /**
+   * 피드백 반영: 개별 파라미터 대신 EmployeeListRequest(Record)를 사용하여 코드를 단순화하고 서비스 계층으로 전달합니다.
+   */
   @Override
   @GetMapping
-  public ResponseEntity<Map<String, Object>> getEmployees(
-      @RequestParam(required = false) String nameOrEmail,
-      @RequestParam(required = false) String employeeNumber,
-      @RequestParam(required = false) String departmentName,
-      @RequestParam(required = false) String position,
-      @RequestParam(required = false) LocalDate hireDateFrom,
-      @RequestParam(required = false) LocalDate hireDateTo,
-      @RequestParam(required = false) EmployeeStatus status,
-      @RequestParam(required = false) Long idAfter,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "hireDate") String sortField,
-      @RequestParam(defaultValue = "desc") String sortDirection)
+  public ResponseEntity<CursorPageResponseEmployeeDto> getEmployees(EmployeeListRequest request)
 
   {
-    return ResponseEntity.ok(employeeService.getEmployees(
-        nameOrEmail, employeeNumber, departmentName, position,
-        hireDateFrom, hireDateTo, status, idAfter, cursor, size, sortField, sortDirection));
+    return ResponseEntity.ok(employeeService.getEmployees(request));
   }
 
 }

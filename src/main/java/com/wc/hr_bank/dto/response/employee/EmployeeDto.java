@@ -1,5 +1,6 @@
 package com.wc.hr_bank.dto.response.employee;
 
+import com.wc.hr_bank.entity.EmployeeStatus;
 import lombok.*;
 import java.time.LocalDate;
 
@@ -18,6 +19,6 @@ public class EmployeeDto
   private String departmentName;
   private String position;
   private LocalDate hireDate;
-  private String status;
+  private EmployeeStatus status;
   private Long profileImageId;
 }

@@ -1,7 +1,9 @@
 package com.wc.hr_bank.controller.api;
 
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
+import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -73,4 +76,6 @@ public interface EmployeeApi
       @Parameter(description = "정렬 방향 (asc, desc)") String sortDirection
   );
 
+  @GetMapping
+  ResponseEntity<CursorPageResponseEmployeeDto> getEmployees(EmployeeListRequest request);
 }

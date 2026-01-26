@@ -20,7 +20,7 @@ public class Employee extends BaseUpdatableEntity
   @JoinColumn(name = "department_id", nullable = false)
   private Department department;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "file_id")
   private File profileImage;
 
@@ -54,7 +54,7 @@ public class Employee extends BaseUpdatableEntity
   {
     this.name = name;
     this.email = email;
-    this.position = position; // 🛠️ 필드명 변경 반영
+    this.position = position;
     this.status = status;
     this.department = department;
     this.profileImage = profileImage;
