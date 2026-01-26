@@ -1,7 +1,6 @@
 package com.wc.hr_bank.service.impl;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
-import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.mapper.DepartmentMapper;
@@ -14,8 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

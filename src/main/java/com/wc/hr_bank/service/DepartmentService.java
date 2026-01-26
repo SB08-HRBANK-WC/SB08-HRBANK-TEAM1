@@ -1,7 +1,6 @@
 package com.wc.hr_bank.service;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
-import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import org.springframework.data.domain.Page;
 

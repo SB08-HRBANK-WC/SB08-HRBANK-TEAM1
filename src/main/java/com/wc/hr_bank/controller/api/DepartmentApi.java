@@ -1,7 +1,7 @@
 package com.wc.hr_bank.controller.api;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
-import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
+import com.wc.hr_bank.dto.response.ErrorResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import com.wc.hr_bank.dto.response.ErrorResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
