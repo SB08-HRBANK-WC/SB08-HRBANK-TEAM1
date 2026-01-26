@@ -2,6 +2,7 @@ package com.wc.hr_bank.controller;
 
 import com.wc.hr_bank.controller.api.DepartmentApi;
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
+import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import com.wc.hr_bank.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,17 @@ public class DepartmentController implements DepartmentApi
      *
      */
     @Override
-    public ResponseEntity<List<DepartmentDto>> getDepartments() {
-        return ResponseEntity.ok(departmentService.getAllDepartments());
+    public ResponseEntity<DepartmentCursorPageResponse> getDepartments(
+        String nameOrDescription,
+        Long idAfter,
+        String cursor,
+        int size,
+        String sortField,
+        String sortDirection
+    ) {
+        DepartmentCursorPageResponse response = departmentService.getAllDepartments(
+            nameOrDescription, idAfter, cursor, size, sortField, sortDirection);
+        return ResponseEntity.ok(response);
     }
 
     /**
