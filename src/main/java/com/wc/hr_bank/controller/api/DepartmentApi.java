@@ -66,7 +66,7 @@ public interface DepartmentApi
         @RequestParam(required = false, defaultValue = "asc") String sortDirection
     );
 
-    @Operation(summary = "부서 상세 조회", description = "부서 상세 정보를 조회합니다.")
+    @Operation(summary = "부서 상세 조회", description = "부서상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = DepartmentDto.class))),
