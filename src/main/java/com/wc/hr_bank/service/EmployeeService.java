@@ -1,9 +1,11 @@
 package com.wc.hr_bank.service;
 
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -12,7 +14,9 @@ import java.util.Map;
 /**
  * 직원 관리 비즈니스 로직을 처리하는 서비스 인터페이스입니다.
  */
-public interface EmployeeService {
+public interface EmployeeService
+
+{
 
   /**
    * 신규 직원을 시스템에 등록하고 프로필 이미지를 처리합니다.
@@ -23,6 +27,26 @@ public interface EmployeeService {
    * @return 등록이 완료된 직원의 DTO 정보
    */
   EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage, HttpServletRequest servletRequest);
+
+  /**
+   * 기존 직원의 정보를 수정합니다.
+   * 규칙: 사원 번호를 제외한 속성 수정 가능, 이메일 중복 체크, 퇴사는 상태 변경으로 처리.
+   *
+   * @param id             수정할 직원의 고유 ID
+   * @param request        수정할 데이터 정보
+   * @param profileImage   새로 업로드할 프로필 이미지 (선택 사항)
+   * @return 수정된 직원의 DTO 정보
+   */
+  @Transactional
+  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage);
+
+  /**
+   * 고유 식별자(ID)를 통해 특정 직원을 삭제합니다.
+   * 규칙: 삭제 시 연관된 프로필 이미지 파일도 함께 제거되어야 합니다.
+   *
+   * @param id 삭제할 직원의 고유 ID
+   */
+  void deleteEmployee(Long id);
 
   /**
    * 고유 식별자(ID)를 통해 특정 직원의 상세 정보를 조회합니다.
@@ -41,7 +65,7 @@ public interface EmployeeService {
    * @param position       직함 검색어 (부분 일치)
    * @param hireDateFrom   조회 시작 입사일
    * @param hireDateTo     조회 종료 입사일
-   * @param status         재직 상태 (EMPLOYED, RESIGNED 등)
+   * @param status         재직 상태 (ACTIVATE, RESIGNED 등)
    * @param idAfter        이전 페이지의 마지막 데이터 ID (커서)
    * @param cursor         암호화된 커서 정보 (필요 시 사용)
    * @param size           조회할 페이지 크기
@@ -53,4 +77,5 @@ public interface EmployeeService {
       String nameOrEmail, String employeeNumber, String departmentName, String position,
       LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status,
       Long idAfter, String cursor, int size, String sortField, String sortDirection);
+
 }

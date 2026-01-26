@@ -1,38 +1,63 @@
 package com.wc.hr_bank.controller.api;
 
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.Map;
 
-@Tag(name = "Employee", description = "인사 관리 시스템의 직원 정보 등록 및 조회를 담당하는 API입니다.")
+@Tag(name = "직원 관리", description = "직원 관리 API")
 public interface EmployeeApi
 {
 
-  @Operation(summary = "신규 직원 등록", description = "직원의 인적 사항과 프로필 이미지를 등록합니다. 이메일은 중복될 수 없으며 사번은 자동 생성됩니다.")
+  @Operation(summary = "직원 등록", description = "새로운 직원을 등록합니다.")
   ResponseEntity<EmployeeDto> createEmployee(
       @Parameter(description = "등록할 직원의 상세 정보 (JSON)") EmployeeCreateRequest request,
       @Parameter(description = "직원의 프로필 이미지 파일 (Multipart)") MultipartFile profileImage,
       HttpServletRequest servletRequest
   );
+  /**
+   * 이미지 가이드 반영: summary(제목)와 description(상세 설명) 추가
+   */
+  @Operation(summary = "직원 수정", description = "직원 정보를 수정합니다.")
+  @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+  ResponseEntity<EmployeeDto> updateEmployee(
+      @PathVariable Long id,
+      @RequestPart("employee") EmployeeUpdateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profileImage
+  );
 
-  @Operation(summary = "직원 상세 정보 조회", description = "직원의 고유 ID를 사용하여 해당 직원의 모든 상세 정보를 조회합니다.")
+  @Operation(summary = "직원 상세 정보 조회", description = "직원 상세 정보를 조회합니다.")
   ResponseEntity<EmployeeDto> getEmployeeById(
       @Parameter(description = "조회할 직원의 식별자 (ID)") Long id
   );
+  @Operation(summary = "직원 삭제", description = "직원을 삭제합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "삭제 성공"),
+      @ApiResponse(responseCode = "404", description = "직원을 찾을 수 없음"),
+      @ApiResponse(responseCode = "500", description = "서버 오류")
+  })
+  @DeleteMapping("/{id}")
+  ResponseEntity<Void> deleteEmployee(@Parameter(description = "직원 ID") @PathVariable Long id);
 
   ResponseEntity<Map<String, Object>> getEmployees(String nameOrEmail, String employeeNumber,
       String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo,
       EmployeeStatus status, Long idAfter, int size, String sortField, String sortDirection);
 
-  @Operation(summary = "직원 목록 검색 및 페이징", description = "다양한 필터 조건을 조합하여 직원 목록을 조회합니다. No-Offset 방식을 사용하여 대용량 데이터에서도 성능이 최적화되어 있습니다.")
+  @Operation(summary = "직원 목록 조회", description = "직원 목록을 조회합니다.")
   ResponseEntity<Map<String, Object>> getEmployees(
       @Parameter(description = "이름 또는 이메일 (부분 일치)") String nameOrEmail,
       @Parameter(description = "사원 번호 (부분 일치)") String employeeNumber,
@@ -47,4 +72,5 @@ public interface EmployeeApi
       @Parameter(description = "정렬 기준 필드 (name, employeeNumber, hireDate)") String sortField,
       @Parameter(description = "정렬 방향 (asc, desc)") String sortDirection
   );
+
 }

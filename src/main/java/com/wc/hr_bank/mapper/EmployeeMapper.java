@@ -16,8 +16,8 @@ public interface EmployeeMapper
 
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentName", source = "department.name")
-    @Mapping(target = "position", source = "jobTitle")
-    @Mapping(target = "hireDate", source = "joinedAt")
+    @Mapping(target = "position", source = "position")
+    @Mapping(target = "hireDate", source = "hireDate")
     @Mapping(target = "status", expression = "java(employee.getStatus() != null ? employee.getStatus().getDescription() : \"재직중\")")
     @Mapping(target = "profileImageId", source = "profileImage.id")
     EmployeeDto toDto(Employee employee);
