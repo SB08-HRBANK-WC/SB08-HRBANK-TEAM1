@@ -6,6 +6,7 @@ import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import com.wc.hr_bank.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class DepartmentController implements DepartmentApi
      *
      */
     @Override
-    public ResponseEntity<DepartmentCursorPageResponse> getDepartments(
+    public ResponseEntity<Page<DepartmentDto>> getDepartments(
         String nameOrDescription,
         Long idAfter,
         String cursor,
@@ -39,7 +40,7 @@ public class DepartmentController implements DepartmentApi
         String sortField,
         String sortDirection
     ) {
-        DepartmentCursorPageResponse response = departmentService.getAllDepartments(
+        Page<DepartmentDto> response = departmentService.getAllDepartments(
             nameOrDescription, idAfter, cursor, size, sortField, sortDirection);
         return ResponseEntity.ok(response);
     }
