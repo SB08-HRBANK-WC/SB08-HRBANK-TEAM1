@@ -236,9 +236,9 @@ public class ChangeLogServiceImpl implements ChangeLogService
 
     compareAndRecord(log, LogPropertyType.EMAIL, oldE, newE, Employee::getEmail, type);
 
-    compareAndRecord(log, LogPropertyType.JOB_TITLE, oldE, newE, Employee::getJobTitle, type);
+    compareAndRecord(log, LogPropertyType.POSITION, oldE, newE, Employee::getPosition, type);
 
-    compareAndRecord(log, LogPropertyType.JOINED_AT, oldE, newE, Employee::getJoinedAt, type);
+    compareAndRecord(log, LogPropertyType.HIRE_DATE, oldE, newE, Employee::getHireDate, type);
 
     compareAndRecord(log, LogPropertyType.STATUS, oldE, newE, Employee::getStatus, type);
 
