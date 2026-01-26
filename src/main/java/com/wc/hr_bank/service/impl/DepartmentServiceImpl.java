@@ -103,8 +103,10 @@ public class DepartmentServiceImpl implements DepartmentService
         Department department = departmentRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("삭제하려는 부서가 존재하지 않습니다."));
 
-        //나중에 직원이 있는지 체크할 로직이 들어갈 곳임
-        //지금은 명세에 따라 부서 존재 확인 후 바로 삭제를 진행
+        //삭제할 부서에 직원이 존재하면 삭제 불가 로직 추가
+        if (!department.getEmployees().isEmpty()) {
+            throw new IllegalArgumentException("부서에 소속된 직원이 있어 삭제할 수 없습니다.");
+        }
 
         departmentRepository.delete(department);
     }
