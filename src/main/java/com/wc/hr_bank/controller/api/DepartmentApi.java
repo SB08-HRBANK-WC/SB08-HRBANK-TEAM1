@@ -2,6 +2,7 @@ package com.wc.hr_bank.controller.api;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
 import com.wc.hr_bank.dto.response.ErrorResponse;
+import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,14 +39,14 @@ public interface DepartmentApi
     @Operation(summary = "부서 목록 조회", description = "모든 부서의 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = Page.class))),
+                    content = @Content(schema = @Schema(implementation = DepartmentCursorPageResponse.class))),
             @ApiResponse(responseCode = "404", description = "부서를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    ResponseEntity<Page<DepartmentDto>> getDepartments(
+    ResponseEntity<DepartmentCursorPageResponse> getDepartments(
         @Parameter(description = "부서 이름 또는 설명")
         @RequestParam(required = false) String nameOrDescription,
 

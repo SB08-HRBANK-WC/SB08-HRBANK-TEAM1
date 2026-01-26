@@ -1,8 +1,8 @@
 package com.wc.hr_bank.service;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
+import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
-import org.springframework.data.domain.Page;
 
 public interface DepartmentService
 {
@@ -18,7 +18,7 @@ public interface DepartmentService
      * 모든 부서 목록 조회,
      *
      */
-    Page<DepartmentDto> getAllDepartments(
+    DepartmentCursorPageResponse getAllDepartments(
         String nameOrDescription,
         Long idAfter,
         String cursor,
