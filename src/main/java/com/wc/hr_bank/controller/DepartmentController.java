@@ -5,6 +5,7 @@ import com.wc.hr_bank.dto.request.department.DepartmentRequest;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import com.wc.hr_bank.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +21,8 @@ public class DepartmentController implements DepartmentApi
      *
      */
     @Override
-    public DepartmentDto createDepartment(@RequestBody DepartmentRequest request) {
-        return departmentService.createDepartment(request);
+    public ResponseEntity<DepartmentDto> createDepartment(@RequestBody DepartmentRequest request) {
+        return ResponseEntity.ok(departmentService.createDepartment(request));
     }
 
     /**
@@ -29,8 +30,8 @@ public class DepartmentController implements DepartmentApi
      *
      */
     @Override
-    public List<DepartmentDto> getDepartments() {
-        return departmentService.getAllDepartments();
+    public ResponseEntity<List<DepartmentDto>> getDepartments() {
+        return ResponseEntity.ok(departmentService.getAllDepartments());
     }
 
     /**
@@ -38,7 +39,31 @@ public class DepartmentController implements DepartmentApi
      *
      */
     @Override
-    public DepartmentDto getDepartmentById(@PathVariable Long id) {
-        return departmentService.getDepartmentById(id);
+    public ResponseEntity<DepartmentDto> getDepartmentById(@PathVariable Long id) {
+        return ResponseEntity.ok(departmentService.getDepartmentById(id));
+    }
+
+    /**
+     * 부서 수정,
+     *
+     */
+    @Override
+    public ResponseEntity<DepartmentDto> updateDepartment(
+        @PathVariable Long id,
+        @RequestBody DepartmentRequest request) {
+
+        DepartmentDto updated = departmentService.updateDepartment(id, request);
+
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * 부서 삭제,
+     *
+     */
+    @Override
+    public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
+        departmentService.deleteDepartment(id);
+        return ResponseEntity.noContent().build();
     }
 }
