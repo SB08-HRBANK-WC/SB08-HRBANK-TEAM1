@@ -9,4 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface DepartmentRepository extends JpaRepository<Department, Long>
 {
+  /**
+   * department 중복 이름 체크 메서드,
+   *
+   */
+  boolean existsByName(String name);
 }

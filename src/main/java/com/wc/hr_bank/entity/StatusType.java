@@ -3,7 +3,7 @@ package com.wc.hr_bank.entity;
 public enum StatusType
 {
     IN_PROGRESS,
-    COMPLETE,
+    COMPLETED,
     FAILED,
     SKIPPED,
 }

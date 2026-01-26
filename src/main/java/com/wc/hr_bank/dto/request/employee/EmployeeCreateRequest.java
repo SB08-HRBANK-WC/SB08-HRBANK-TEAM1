@@ -1,4 +1,4 @@
-package com.wc.hr_bank.dto.request.file;
+package com.wc.hr_bank.dto.request.employee;
 
 import com.wc.hr_bank.entity.EmployeeStatus;
 import jakarta.validation.constraints.Email;
