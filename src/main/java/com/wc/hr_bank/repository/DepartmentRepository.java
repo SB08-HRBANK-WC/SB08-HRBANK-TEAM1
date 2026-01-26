@@ -1,7 +1,12 @@
 package com.wc.hr_bank.repository;
 
 import com.wc.hr_bank.entity.Department;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * department entity repository 인터페이스,
@@ -14,4 +19,16 @@ public interface DepartmentRepository extends JpaRepository<Department, Long>
    *
    */
   boolean existsByName(String name);
+
+  /**
+   *이름 또는 설명 검색 + No-Offset 페이징 + 정렬 및 크기 제한
+   */
+  @Query("SELECT d FROM Department d " +
+      "WHERE (d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:idAfter IS NULL OR d.id > :idAfter)")
+  List<Department> searchByKeyword(
+      @Param("keyword") String keyword,
+      @Param("idAfter") Long idAfter,
+      Pageable pageable
+  );
 }

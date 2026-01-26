@@ -1,6 +1,7 @@
 package com.wc.hr_bank.controller.api;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
+import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,15 +11,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
+import com.wc.hr_bank.dto.response.ErrorResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "부서 관리", description = "부서 관리 API")
 public interface DepartmentApi
@@ -45,7 +45,25 @@ public interface DepartmentApi
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    ResponseEntity<List<DepartmentDto>> getDepartments();
+    ResponseEntity<DepartmentCursorPageResponse> getDepartments(
+        @Parameter(description = "부서 이름 또는 설명")
+        @RequestParam(required = false) String nameOrDescription,
+
+        @Parameter(description = "이전 페이지 마지막 요소 ID")
+        @RequestParam(required = false) Long idAfter,
+
+        @Parameter(description = "커서 (다음 페이지 시작점)")
+        @RequestParam(required = false) String cursor,
+
+        @Parameter(description = "페이지 크기(기본값: 10)")
+        @RequestParam(required = false, defaultValue = "10") int size,
+
+        @Parameter(description = "정렬 필드 (name 또는 establishedDate)")
+        @RequestParam(required = false, defaultValue = "establishedDate") String sortField,
+
+        @Parameter(description = "정렬 방향 (asc 또는 desc, 기본값: asc))")
+        @RequestParam(required = false, defaultValue = "asc") String sortDirection
+    );
 
     @Operation(summary = "부서 상세 조회", description = "부서 상세 정보를 조회합니다.")
     @ApiResponses(value = {
