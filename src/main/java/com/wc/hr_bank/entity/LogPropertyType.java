@@ -8,10 +8,11 @@ import lombok.RequiredArgsConstructor;
 public enum LogPropertyType
 {
   EMPLOYEE_NAME("name"),
+  EMPLOYEE_NUMBER("employeeNumber"),
+  PROFILE_IMAGE("image"),
   EMAIL("email"),
   JOB_TITLE("position"),
-  PROFILE_IMAGE("profileImage"),
-  DEPARTMENT("departmentName"),
+  DEPARTMENT("department"),
   JOINED_AT("hireDate"),
   STATUS("status");
 

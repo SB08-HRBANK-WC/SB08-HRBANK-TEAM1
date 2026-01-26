@@ -67,7 +67,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
 
     logs = switch (sortField) {
       case "at" -> {
-        Instant cursorAt = (cursor != null)
+        Instant cursorAt = (cursor != null && !cursor.isBlank())
             ? convertToInstant(LocalDateTime.parse(request.cursor()))
             : null;
 
@@ -79,7 +79,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
       case "ipAddress" -> "desc".equals(sortDirection)
             ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
             : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
-      default -> List.of();
+      default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다: " + sortField);
     };
 
     List<ChangeLogDto> content = logs.stream()
@@ -98,6 +98,9 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @return
    */
   private Instant convertToInstant(LocalDateTime datetime) {
+    if (datetime == null) {
+      return null;
+    }
     Instant instant = datetime.atZone(KOREA_ZONE).toInstant();
     return instant;
   }
@@ -223,6 +226,8 @@ public class ChangeLogServiceImpl implements ChangeLogService
    */
   private void saveLog(ChangeLog log, Employee oldE, Employee newE, ChangeType type) {
     compareAndRecord(log, LogPropertyType.EMPLOYEE_NAME, oldE, newE, Employee::getName, type);
+
+    compareAndRecord(log, LogPropertyType.EMPLOYEE_NUMBER, oldE, newE, Employee::getEmployeeNumber, type);
 
     compareAndRecord(log, LogPropertyType.EMAIL, oldE, newE, Employee::getEmail, type);
 

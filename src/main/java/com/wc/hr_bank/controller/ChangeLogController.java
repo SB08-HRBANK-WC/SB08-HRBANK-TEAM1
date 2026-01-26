@@ -21,6 +21,11 @@ public class ChangeLogController implements ChangeLogApi
 {
   private final ChangeLogService changeLogService;
 
+  /**
+   * 직원 정보 수정 이력 목록 조회
+   * @param request
+   * @return
+   */
   @Override
   public ResponseEntity<CursorPageResponseChangeLogDto> getEmployeeLogs (@ModelAttribute ChangeLogRequest request) {
 
@@ -29,6 +34,11 @@ public class ChangeLogController implements ChangeLogApi
     return ResponseEntity.ok(changeLogs);
   }
 
+  /**
+   * 직원 정보 수정 이력 상세 조회
+   * @param id
+   * @return
+   */
   @Override
   public ResponseEntity<ChangeLogDetailDto> getChangeLogDiffs(@PathVariable Long id) {
 
@@ -37,6 +47,7 @@ public class ChangeLogController implements ChangeLogApi
     return ResponseEntity.ok(response);
   }
 
+  // 수정 이력 기간 별 건수 조회
   @Override
   public ResponseEntity<Long> getChangeLogCount(
       @RequestParam(required = false) LocalDateTime from,
