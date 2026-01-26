@@ -1,7 +1,10 @@
 package com.wc.hr_bank.service.impl;
 
 
+import com.wc.hr_bank.dto.request.changelog.EmployeeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
+import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
+import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
 import com.wc.hr_bank.entity.ChangeLog;
 import com.wc.hr_bank.entity.ChangeType;
 import com.wc.hr_bank.entity.Department;
@@ -15,10 +18,13 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +35,90 @@ public class ChangeLogServiceImpl implements ChangeLogService
 {
   private final ChangeLogRepository changeLogRepository;
   private final ChangeLogMapper changeLogMapper;
+
+  /**
+   * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
+   * @param request
+   * @return
+   */
+  @Override
+  public CursorPageResponseChangeLogDto getChangeLogs(EmployeeLogRequest request) {
+    Pageable pageable = PageRequest.of(0, request.size());
+
+    // 정렬 필드 - ipAddress, at
+    String sortField = request.sortField();
+
+    // 정렬 방향 - asc, desc
+    String sortDirection = request.sortDirection();
+
+    String nextCursor = null;
+    Long nextIdAfter = 0L;
+    List<ChangeLog> logs = List.of();
+
+    String employeeNumber = request.employeeNumber();
+    ChangeType type = request.type();
+    String memo = request.memo();
+    String ipAddress = request.ipAddress();
+
+    Instant atFrom = convertToInstant(request.atFrom());
+    Instant atTo = convertToInstant(request.atTo());
+
+    Long idAfter = request.idAfter();
+    String cursor = request.cursor();
+
+    logs = switch (sortField) {
+      case "at" -> {
+        Instant cursorAt = (cursor != null)
+            ? convertToInstant(LocalDateTime.parse(request.cursor()))
+            : null;
+
+        yield "desc".equals(sortDirection)
+            ? changeLogRepository.findByAtDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable)
+            : changeLogRepository.findByAtAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable);
+      }
+
+      case "ipAddress" -> {
+        yield "desc".equals(sortDirection)
+            ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
+            : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
+      }
+      default -> List.of();
+    };
+
+
+    List<ChangeLogDto> content = logs.stream()
+        .map(changeLogMapper::toLogDto)
+        .toList();
+
+    boolean hasNext = content.size() >= request.size();
+
+    if (!content.isEmpty()) {
+      ChangeLogDto lastItem = content.get(content.size() - 1);
+      nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
+      nextIdAfter = lastItem.id();
+    }
+
+    Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
+
+    return changeLogMapper.toCursorPageResponse(
+        content,
+        nextCursor,
+        nextIdAfter,
+        request.size(),
+        totalElements,
+        hasNext
+    );
+  }
+
+  /**
+   * DateTime -> Instant 변환
+   * @param datetime
+   * @return
+   */
+  private Instant convertToInstant(LocalDateTime datetime) {
+    Instant instant = datetime.atZone(ZoneId.systemDefault()).toInstant();
+    return instant;
+  }
 
   /**
    * 특정 이력 상세 정보 조회
@@ -181,7 +271,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @param <T>
    * @param <R>
    */
-  private <T, R> String transform(T target, Function<T, R> mapper) {
+  private <Employee, R> String transform(Employee target, Function<Employee, R> mapper) {
     return Optional.ofNullable(target)
         .map(mapper)
         .map(String::valueOf)

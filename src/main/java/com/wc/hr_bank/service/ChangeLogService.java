@@ -1,11 +1,23 @@
 package com.wc.hr_bank.service;
 
+import com.wc.hr_bank.dto.request.changelog.EmployeeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
+import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
+import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
 import com.wc.hr_bank.entity.Employee;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ChangeLogService
 {
+
+  /**
+   * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
+   * @param request
+   * @return
+   */
+  CursorPageResponseChangeLogDto getChangeLogs(EmployeeLogRequest request);
+
   /**
    * 수정 이력 상세 조회
    * @param id
