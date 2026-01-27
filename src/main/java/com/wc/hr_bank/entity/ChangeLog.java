@@ -35,7 +35,7 @@ public class ChangeLog extends BaseUpdatableEntity
     @Enumerated(EnumType.STRING)
     private ChangeType type; // CREATED, UPDATED, DELETED
 
-    @Column(name = "ip_address", nullable = false)
+    @Column(name = "ip_address", nullable = false, length = 45)
     private String ipAddress;
 
     // 1:N 관계
