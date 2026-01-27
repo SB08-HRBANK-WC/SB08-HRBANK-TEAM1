@@ -2,7 +2,9 @@ package com.wc.hr_bank.mapper;
 
 import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
 import com.wc.hr_bank.entity.Employee;
+import java.time.LocalDate;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -24,4 +26,6 @@ public interface EmployeeMapper
   EmployeeDto toDto(Employee employee);
 
   EmployeeDistDto toEmployeeDistDto(String groupKey, Long count, Double percentage);
+
+  EmployeeTrendDto toEmployeeTrendDto(LocalDate date, Long count, Long change, Double changeRate);
 }

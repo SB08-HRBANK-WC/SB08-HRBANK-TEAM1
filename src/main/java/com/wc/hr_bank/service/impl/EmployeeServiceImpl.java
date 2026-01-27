@@ -6,6 +6,7 @@ import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
 import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.entity.Employee;
 import com.wc.hr_bank.entity.EmployeeStatus;
@@ -16,8 +17,13 @@ import com.wc.hr_bank.service.ChangeLogService;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -287,5 +293,86 @@ public class EmployeeServiceImpl implements EmployeeService
     LocalDate defaultFromDate = (fromDate == null) ? LocalDate.of(1900, 1, 1) : fromDate;
 
     return employeeRepository.countByPeriod(status, defaultFromDate, defaultToDate);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<EmployeeTrendDto> getEmployeeTrend(
+      LocalDate fromDate,
+      LocalDate toDate,
+      String unit
+  ) {
+    // 종료 날짜:(기본=현재)
+    LocalDate defaultToDate = (toDate == null) ? LocalDate.now() : toDate;
+    String searchUnit = (unit != null) ? unit.toLowerCase() : "month";
+
+    // 시작날짜: unit에 오는 문자열 기준으로 (12 * unit) 전 (미션 요구사항)
+    LocalDate defaultFromDate = fromDate;
+
+    if (defaultFromDate == null) {
+      defaultFromDate = switch (searchUnit) {
+        case "day" -> defaultToDate.minusDays(12); // 12일 전
+        case "week" -> defaultToDate.minusWeeks(12); // 12주 전
+        case "quarter" -> defaultToDate.minusMonths(36); // 12 분기 전 = 3년 전
+        case "year" -> defaultToDate.minusYears(12); // 12년 전
+        default -> defaultToDate.minusMonths(12); // 12개월 전 (기본)
+      };
+    }
+
+    // 입사일 기준으로 그룹 & 입사일 카운트
+    // allCounts[0]: 입사 날짜
+    // allCounts[1]: 인원 수
+    List<Object[]> allCounts = employeeRepository.findJoinedCountsByPeriod(defaultToDate);
+
+
+    Map<LocalDate, Long> bucketedMap = new TreeMap<>();
+
+    for (Object[] row : allCounts) {
+      LocalDate date = (LocalDate) row[0];
+      Long count = (Long) row[1];
+
+      LocalDate bucket = convertToBucket(date, searchUnit);
+      bucketedMap.merge(bucket, count, Long::sum);
+    }
+
+
+    List<EmployeeTrendDto> result = new ArrayList<>();
+    long cumulativeCount = 0;
+    Long prevCumulative = null;
+
+    for (var entry : bucketedMap.entrySet()) {
+      LocalDate currentBucket = entry.getKey();
+      cumulativeCount += entry.getValue(); // 누적 합계
+
+      // 요청한 기간(fromDate) 이후의 데이터만 결과 리스트에 추가
+      if (!currentBucket.isBefore(defaultFromDate)) {
+        long change = (prevCumulative == null) ? 0L : (cumulativeCount - prevCumulative);
+        double changeRate = 0.0;
+
+        if (prevCumulative != null && prevCumulative > 0) {
+          changeRate = (double) change * 100 / prevCumulative;
+        }
+
+        // Mapper를 통해 Record 생성 (소수점 둘째자리 반올림)
+        result.add(employeeMapper.toEmployeeTrendDto(
+            currentBucket,
+            cumulativeCount,
+            change,
+            Math.round(changeRate * 100.0) / 100.0
+        ));
+      }
+      prevCumulative = cumulativeCount;
+    }
+
+    return result;
+  }
+
+  private LocalDate convertToBucket(LocalDate date, String unit) {
+    return switch (unit) {
+      case "year" -> date.with(TemporalAdjusters.firstDayOfYear());
+      case "month", "quarter" -> date.with(TemporalAdjusters.firstDayOfMonth());
+      case "week" -> date.with(WeekFields.of(Locale.KOREA).dayOfWeek(), 1);
+      default -> date; // day
+    };
   }
 }

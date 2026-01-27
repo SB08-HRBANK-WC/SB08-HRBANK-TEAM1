@@ -7,6 +7,7 @@ import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -112,6 +113,17 @@ public class EmployeeController implements EmployeeApi
       @RequestParam(required = false) LocalDate toDate
   ) {
     Long result = employeeService.countByPeriod(status, fromDate, toDate);
+
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping("/stats/trend")
+  public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+      @RequestParam(required = false) LocalDate fromDate,
+      @RequestParam(required = false) LocalDate toDate,
+      @RequestParam(defaultValue = "month") String unit
+  ) {
+    List<EmployeeTrendDto> result = employeeService.getEmployeeTrend(fromDate, toDate, unit);
 
     return ResponseEntity.ok(result);
   }

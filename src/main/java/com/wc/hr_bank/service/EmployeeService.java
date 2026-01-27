@@ -6,6 +6,7 @@ import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
@@ -61,4 +62,14 @@ public interface EmployeeService
    * @return
    */
   Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
+
+  /**
+   * 지정된 기간 및 시간 단위로 그룹화된 직원 수 추이를 조회
+   *
+   * @param fromDate
+   * @param toDate
+   * @param unit
+   * @return
+   */
+  List<EmployeeTrendDto> getEmployeeTrend(LocalDate fromDate, LocalDate toDate, String unit);
 }

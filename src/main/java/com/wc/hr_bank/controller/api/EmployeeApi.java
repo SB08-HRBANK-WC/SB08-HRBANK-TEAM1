@@ -6,10 +6,12 @@ import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -155,5 +157,44 @@ public interface EmployeeApi
           schema = @Schema(implementation = LocalDate.class)
       )
       LocalDate toDate
+  );
+
+  @Operation(summary = "직원 수 추이 조회", description = "지정된 기간 및 시간 단위로 그룹화된 직원 수 추이를 조회합니다. 파라미터를 제공하지 않으면 최근 12개월 데이터를 월 단위로 반환합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200", description = "조회 성공",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = EmployeeTrendDto.class)))
+      ),
+      @ApiResponse(
+          responseCode = "404", description = "조회 실패",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+      ),
+      @ApiResponse(
+          responseCode = "500", description = "서버 오류",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+      )
+  })
+  ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+      @Parameter(
+          name = "fromDate",
+          description = "시작 일시 (기본값: 현재로부터 unit 기준 12개 이전)",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = LocalDate.class)
+      )
+      LocalDate fromDate,
+      @Parameter(
+          name = "toDate",
+          description = "종료 일시 (기본값: 현재)",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = LocalDate.class)
+      )
+      LocalDate toDate,
+      @Parameter(
+          name = "unit",
+          description = "시간 단위 (day, week, month, quarter, year, 기본값: month)",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = String.class)
+      )
+      String unit
   );
 }

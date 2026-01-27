@@ -209,4 +209,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
       """
   )
   Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
+
+  @Query("""
+    SELECT e.hireDate, COUNT(e)
+    FROM Employee e
+    WHERE e.hireDate <= :toDate
+    GROUP BY e.hireDate
+    ORDER BY e.hireDate ASC
+    """)
+  List<Object[]> findJoinedCountsByPeriod(LocalDate toDate);
 }
