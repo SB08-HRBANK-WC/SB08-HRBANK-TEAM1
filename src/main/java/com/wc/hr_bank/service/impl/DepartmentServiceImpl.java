@@ -8,6 +8,7 @@ import com.wc.hr_bank.mapper.DepartmentMapper;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.service.DepartmentService;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -57,17 +58,33 @@ public class DepartmentServiceImpl implements DepartmentService
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(0, size, Sort.by(direction, sortField).and(Sort.by(direction, "id")));
 
-        //정렬 필드별 쿼리 분기 처리
+        //날짜 커서 안전하게 파싱
+        LocalDate dateCursor = null;
+        if ("establishedDate".equals(sortField) && cursor != null && !cursor.isBlank()) {
+            try {
+                //파싱 로직 변경
+                if (cursor.contains("T")) {
+                    dateCursor = java.time.LocalDate.parse(cursor.split("T")[0]);
+                } else {
+                    dateCursor = java.time.LocalDate.parse(cursor);
+                }
+            } catch (Exception e) {
+                dateCursor = null;
+            }
+        }
+
+        //정렬 기준 및 방향에 따른 쿼리 실행
         Page<Department> page;
+        boolean isDesc = "desc".equalsIgnoreCase(sortDirection);
+
         if ("name".equals(sortField)) {
-            //이름순 정렬: cursor 문자열 그대로 사용
-            page = departmentRepository.searchByNameOrder(nameOrDescription, cursor, idAfter, pageable);
+            page = isDesc ? departmentRepository.searchByNameOrderDesc(nameOrDescription, cursor, idAfter, pageable)
+                : departmentRepository.searchByNameOrder(nameOrDescription, cursor, idAfter, pageable);
         } else if ("establishedDate".equals(sortField)) {
-            //날짜순 정렬: cursor를 Instant로 변환
-            Instant dateCursor = (cursor != null && !cursor.isBlank()) ? Instant.parse(cursor) : null;
-            page = departmentRepository.searchByDateOrder(nameOrDescription, dateCursor, idAfter, pageable);
+            page = isDesc ? departmentRepository.searchByDateOrderDesc(nameOrDescription, dateCursor, idAfter, pageable)
+                : departmentRepository.searchByDateOrder(nameOrDescription, dateCursor, idAfter, pageable);
         } else {
-            //기본 ID순 정렬
+            // 기본 ID순 정렬
             page = departmentRepository.searchByIdOrder(nameOrDescription, idAfter, pageable);
         }
 
