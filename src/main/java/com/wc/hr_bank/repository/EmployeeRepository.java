@@ -182,4 +182,40 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
       @Param("idAfter") Long idAfter,
       Pageable pageable
   );
+
+  @Query("""
+      SELECT
+          (CASE
+              WHEN :groupBy = 'department' THEN d.name
+              ELSE e.position
+          END) AS groupKey,
+          COUNT(e) AS count,
+         (COUNT(e) * 100) / SUM(COUNT(e)) OVER() AS percentage
+      FROM Employee e
+      JOIN e.department d
+      WHERE e.status = :status
+      GROUP BY :groupBy
+      """)
+  List<Object[]> getEmployeesDist(
+      String groupBy,
+      EmployeeStatus status
+  );
+
+  @Query("""
+      SELECT COUNT(e)
+      FROM Employee e 
+      WHERE e.status = :status 
+            AND e.hireDate BETWEEN :fromDate AND :toDate
+      """
+  )
+  Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
+
+  @Query("""
+    SELECT e.hireDate, COUNT(e)
+    FROM Employee e
+    WHERE e.hireDate <= :toDate
+    GROUP BY e.hireDate
+    ORDER BY e.hireDate ASC
+    """)
+  List<Object[]> findJoinedCountsByPeriod(LocalDate toDate);
 }

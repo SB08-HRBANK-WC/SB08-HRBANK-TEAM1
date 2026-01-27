@@ -5,9 +5,14 @@ import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeTrendDto;
+import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -87,4 +93,38 @@ public class EmployeeController implements EmployeeApi
     return ResponseEntity.ok(employees);
   }
 
+  /**
+   * 대시보드 관련
+   */
+  @GetMapping("/stats/distribution")
+  public ResponseEntity<List<EmployeeDistDto>> getEmployeesDist(
+      @RequestParam(defaultValue = "department") String groupBy,
+      @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status
+  ) {
+    List<EmployeeDistDto> result = employeeService.getEmployeesDist(groupBy, status);
+
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping("/count")
+  public ResponseEntity<Long> getEmployeeCount(
+      @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status,
+      @RequestParam(required = false) LocalDate fromDate,
+      @RequestParam(required = false) LocalDate toDate
+  ) {
+    Long result = employeeService.countByPeriod(status, fromDate, toDate);
+
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping("/stats/trend")
+  public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+      @RequestParam(required = false) LocalDate fromDate,
+      @RequestParam(required = false) LocalDate toDate,
+      @RequestParam(defaultValue = "month") String unit
+  ) {
+    List<EmployeeTrendDto> result = employeeService.getEmployeeTrend(fromDate, toDate, unit);
+
+    return ResponseEntity.ok(result);
+  }
 }
