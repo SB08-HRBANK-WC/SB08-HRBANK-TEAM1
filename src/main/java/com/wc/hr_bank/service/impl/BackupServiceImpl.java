@@ -91,13 +91,13 @@ public class BackupServiceImpl implements BackupService
         // cursor가 없는 경우 (첫 페이지)
         if (backupCursorPageRequest.cursor() == null) {
             return backupRepository.findAllWithoutCursor(
-                    worker,
-                    backupCursorPageRequest.status(),
-                    backupCursorPageRequest.startedAtFrom(),
-                    backupCursorPageRequest.startedAtTo(),
-                    pageable
-                )
-                .map(backupMapper::toDto);
+                            worker,
+                            backupCursorPageRequest.status(),
+                            backupCursorPageRequest.startedAtFrom(),
+                            backupCursorPageRequest.startedAtTo(),
+                            pageable
+                    )
+                    .map(backupMapper::toDto);
         }
 
         // cursor가 있는 경우
@@ -124,15 +124,15 @@ public class BackupServiceImpl implements BackupService
     private Page<BackupDto> pageableByStartedAt(BackupCursorPageRequest backupCursorPageRequest, String worker, Instant cursor, Pageable pageable) {
         if ("ASC".equals(backupCursorPageRequest.sortDirection())) {
             return backupRepository.findAllWithCursorOrderByStartedAtAsc(
-                    worker,
-                    backupCursorPageRequest.status(),
-                    backupCursorPageRequest.startedAtFrom(),
-                    backupCursorPageRequest.startedAtTo(),
-                    cursor,
-                    backupCursorPageRequest.idAfter(),
-                    pageable
-                )
-                .map(backupMapper::toDto);
+                            worker,
+                            backupCursorPageRequest.status(),
+                            backupCursorPageRequest.startedAtFrom(),
+                            backupCursorPageRequest.startedAtTo(),
+                            cursor,
+                            backupCursorPageRequest.idAfter(),
+                            pageable
+                    )
+                    .map(backupMapper::toDto);
         }
 
         return backupRepository.findAllWithCursorOrderByStartedAtDesc(
@@ -159,15 +159,15 @@ public class BackupServiceImpl implements BackupService
     private Page<BackupDto> pageableByEndedAt(BackupCursorPageRequest backupCursorPageRequest, String worker, Instant cursor, Pageable pageable) {
         if ("ASC".equals(backupCursorPageRequest.sortDirection())) {
             return backupRepository.findAllWithCursorOrderByEndedAtAsc(
-                    worker,
-                    backupCursorPageRequest.status(),
-                    backupCursorPageRequest.startedAtFrom(),
-                    backupCursorPageRequest.startedAtTo(),
-                    cursor,
-                    backupCursorPageRequest.idAfter(),
-                    pageable
-                )
-                .map(backupMapper::toDto);
+                            worker,
+                            backupCursorPageRequest.status(),
+                            backupCursorPageRequest.startedAtFrom(),
+                            backupCursorPageRequest.startedAtTo(),
+                            cursor,
+                            backupCursorPageRequest.idAfter(),
+                            pageable
+                    )
+                    .map(backupMapper::toDto);
         }
 
         return backupRepository.findAllWithCursorOrderByEndedAtDesc(
@@ -213,8 +213,9 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 특정 상태의 가장 최근 백업 정보를 조회,
+     * 상태를 특정하지 않으면 COMPLETED
      *
-     * @param status 특정 상태 (null이면 COMPLETED
+     * @param status 특정 상태
      * @return 가장 최근 백업 정보
      */
     @Override
@@ -292,8 +293,7 @@ public class BackupServiceImpl implements BackupService
      *
      * @param startedAt 백업 시작 시간
      * @param backup 백업하려는 백업 엔티티
-     * @return 생성된 파일 엔티티
-     * @throws IOException 파일 생성 실패 시
+     * @return 파일 엔티티
      */
     private File performBackupStream(Backup backup, Instant startedAt) throws IOException {
         // 임시 엔티티 (임시 정보로 먼저 저장 -> ID 획득 -> 물리적 파일 생성 -> 최종 정보로 업데이트)
@@ -324,8 +324,8 @@ public class BackupServiceImpl implements BackupService
                             employee.getName(),
                             employee.getEmail(),
                             employee.getDepartment().getName(),
-                            employee.getJobTitle(),
-                            employee.getJoinedAt(),
+                            employee.getPosition(),
+                            employee.getHireDate(),
                             employee.getStatus()
                     ));
                 }
@@ -334,7 +334,7 @@ public class BackupServiceImpl implements BackupService
         }
 
         String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        Path filePath = Paths.get(root, file.getId() + ".csv");
+        Path filePath = Paths.get(root + file.getId() + ".csv");
         Long fileSize = Files.size(filePath);
 
         file.update(fileName, "text/csv", fileSize, null);
@@ -345,14 +345,11 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 백업 실패,
-     * csv 파일을 삭제하고 에러 로그를 생성
+     * 백업이 실패하면 기존의 .csv파일을 삭제한 뒤 에러 로그 파일을 생성한다.
      *
-     * @param backup 백업 엔티티
-     * @param startedAt 백업 시작 시간
-     * @param csvfile 실패한 csv 파일 (삭제)
-     * @param e 발생한 예외
-     * @return 백업 결과 DTO
+     * @param backup 백업 인스턴스
      */
+    @Transactional
     public BackupDto backupFailure(Backup backup, Instant startedAt, File csvfile, Exception e) {
         // STEP 4-2-1: 실패시 CSV 파일 삭제
         if (csvfile != null) {
@@ -374,7 +371,7 @@ public class BackupServiceImpl implements BackupService
 
             // STEP 4-2-2: 에러 로그를 .log 파일로 저장
             String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-            Path filePath = Paths.get(root, logFile.getId() + ".log");
+            Path filePath = Paths.get(root + logFile.getId() + ".log");
             Long fileSize = Files.size(filePath);
 
             logFile.update(fileName, "text/plain", fileSize, null);
@@ -393,12 +390,12 @@ public class BackupServiceImpl implements BackupService
 
     /**
      * 백업 성공,
-     * 백업에 성공하면 백업 엔티티의 상태를 변경
+     * 백업에 성공하면 백업 엔티티의 상태를 변경해준다.
      *
      * @param backup 백업 인스턴스
      * @param file .csv 파일
-     * @return 백업 결과 DTO
      */
+    @Transactional
     public BackupDto backupSuccess(Backup backup, File file) {
         backup.update(Instant.now(), file, StatusType.COMPLETED);
 
@@ -410,7 +407,7 @@ public class BackupServiceImpl implements BackupService
      * 백업 필요 여부를 판단,
      * 가장 최근 완료된 배치 작업 시간(EndedAt) 이후(isAfter) 직원 데이터가 변경(UpdatedAt)된 경우에 데이터 백업이 필요한 것으로 간주
      *
-     * @return 백업 필요시 true
+     * @return 백업 여부
      */
     private Boolean needsBackup() {
         Instant lastEndedAt = backupRepository.findTopByOrderByEndedAtDesc();
@@ -430,7 +427,7 @@ public class BackupServiceImpl implements BackupService
     /**
      * HTTP 요청에서 IP 추출,
      *
-     * @param httpServletRequest HTTP 요청 객체
+     * @param httpServletRequest 서블릿 요청 객체
      * @return 작업자의 IP
      */
     private String extractIpAddress(HttpServletRequest httpServletRequest) {

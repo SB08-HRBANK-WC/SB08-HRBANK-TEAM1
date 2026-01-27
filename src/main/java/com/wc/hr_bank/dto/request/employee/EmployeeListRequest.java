@@ -1,16 +1,22 @@
 package com.wc.hr_bank.dto.request.employee;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.wc.hr_bank.entity.EmployeeStatus;
+import java.time.LocalDate;
 
-@Getter
-@Setter
-@NoArgsConstructor
-public class EmployeeListRequest {
-
-  private String cursor; // 다음 페이지의 시작점 (예: 마지막 조회한 사원 번호 등)
-
-  private int size = 10; // 한 페이지에 보여줄 개수
-
-}
+/**
+ * 직원 목록 조회를 위한 커서 기반 페이징 및 필터 조건 record입니다.
+ */
+public record EmployeeListRequest(
+    String nameOrEmail,
+    String employeeNumber,
+    String departmentName,
+    String position,
+    LocalDate hireDateFrom,
+    LocalDate hireDateTo,
+    EmployeeStatus status,
+    Long idAfter,
+    String cursor,
+    int size,
+    String sortField,
+    String sortDirection
+) {}

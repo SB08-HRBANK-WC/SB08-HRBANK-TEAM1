@@ -7,14 +7,15 @@ import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.mapper.DepartmentMapper;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.service.DepartmentService;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -52,55 +53,67 @@ public class DepartmentServiceImpl implements DepartmentService
         String sortField,
         String sortDirection) {
 
-        // 1. 커서 처리 (프론트의 cursor 문자열을 Long targetId로 변환)
-        Long targetId = idAfter;
-        if (targetId == null && cursor != null && !cursor.isBlank()) {
+        //기본 정렬 설정
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        Pageable pageable = PageRequest.of(0, size, Sort.by(direction, sortField).and(Sort.by(direction, "id")));
+
+        //날짜 커서 안전하게 파싱
+        LocalDate dateCursor = null;
+        if ("establishedDate".equals(sortField) && cursor != null && !cursor.isBlank()) {
             try {
-                targetId = Long.parseLong(cursor);
-            } catch (NumberFormatException e) {
-                // 유효하지 않은 커서 형식일 경우 첫 페이지 조회(null 유지)
+                //파싱 로직 변경
+                if (cursor.contains("T")) {
+                    dateCursor = java.time.LocalDate.parse(cursor.split("T")[0]);
+                } else {
+                    dateCursor = java.time.LocalDate.parse(cursor);
+                }
+            } catch (Exception e) {
+                dateCursor = null;
             }
         }
 
-        //정렬 설정: Swagger 명세에 맞춰 ASC와 establishedDate를 기본값으로 설정
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        // 기본 정렬 필드를 establishedDate로 변경
-        String field = (sortField == null || sortField.isBlank()) ? "establishedDate" : sortField;
+        //정렬 기준 및 방향에 따른 쿼리 실행
+        Page<Department> page;
+        boolean isDesc = "desc".equalsIgnoreCase(sortDirection);
 
-        //다음 페이지 여부 확인을 위해 size + 1을 조회
-        Pageable pageable = PageRequest.of(0, size + 1, Sort.by(direction, field));
+        if ("name".equals(sortField)) {
+            page = isDesc ? departmentRepository.searchByNameOrderDesc(nameOrDescription, cursor, idAfter, pageable)
+                : departmentRepository.searchByNameOrder(nameOrDescription, cursor, idAfter, pageable);
+        } else if ("establishedDate".equals(sortField)) {
+            page = isDesc ? departmentRepository.searchByDateOrderDesc(nameOrDescription, dateCursor, idAfter, pageable)
+                : departmentRepository.searchByDateOrder(nameOrDescription, dateCursor, idAfter, pageable);
+        } else {
+            // 기본 ID순 정렬
+            page = departmentRepository.searchByIdOrder(nameOrDescription, idAfter, pageable);
+        }
 
-        //데이터 조회 및 DTO 변환
-        String keyword = (nameOrDescription == null) ? "" : nameOrDescription;
-        List<DepartmentDto> allContent = departmentRepository.searchByKeyword(keyword, targetId, pageable)
-            .stream()
+        //데이터 변환 (Entity -> Dto)
+        List<DepartmentDto> content = page.getContent().stream()
             .map(departmentMapper::toDto)
             .toList();
 
-        // 4. 다음 페이지 판별 및 데이터 절삭
-        boolean hasNext = allContent.size() > size;
-        List<DepartmentDto> content = hasNext ? allContent.subList(0, size) : allContent;
-
-        // 5. 응답용 커서 정보 생성
+        //다음 페이지를 위한 커서 정보 생성
         String nextCursor = null;
         Long nextIdAfter = null;
+
         if (!content.isEmpty()) {
             DepartmentDto lastItem = content.get(content.size() - 1);
-            nextCursor = String.valueOf(lastItem.id());
             nextIdAfter = lastItem.id();
+            // 정렬 기준에 따라 다음 커서에 넣어줄 값 결정
+            nextCursor = switch (sortField) {
+                case "name" -> lastItem.name();
+                case "establishedDate" -> lastItem.establishedDate().toString();
+                default -> String.valueOf(lastItem.id());
+            };
         }
-
-        // 6. 전체 개수 조회 (팀 공통 규격)
-        long totalElements = departmentRepository.count();
-
-        // 7. 최종 결과 반환
+        //DTO 생성 및 반환
         return new DepartmentCursorPageResponse(
             content,
             nextCursor,
             nextIdAfter,
-            size,
-            totalElements,
-            hasNext
+            page.getSize(),
+            page.getTotalElements(),
+            page.hasNext() // 다음 페이지 존재 여부
         );
     }
 
@@ -169,3 +182,4 @@ public class DepartmentServiceImpl implements DepartmentService
         departmentRepository.delete(department);
     }
 }
+

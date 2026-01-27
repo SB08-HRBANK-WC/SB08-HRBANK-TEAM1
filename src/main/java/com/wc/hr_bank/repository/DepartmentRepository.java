@@ -1,9 +1,9 @@
 package com.wc.hr_bank.repository;
 
 import com.wc.hr_bank.entity.Department;
-import java.util.List;
+import java.time.LocalDate;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,12 +23,44 @@ public interface DepartmentRepository extends JpaRepository<Department, Long>
   /**
    *이름 또는 설명 검색 + No-Offset 페이징 + 정렬 및 크기 제한
    */
-  @Query("SELECT d FROM Department d " +
-      "WHERE (d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
-      "AND (:idAfter IS NULL OR d.id > :idAfter)")
-  List<Department> searchByKeyword(
-      @Param("keyword") String keyword,
-      @Param("idAfter") Long idAfter,
-      Pageable pageable
-  );
+//ID순 정렬
+  @Query(value = "SELECT d FROM Department d " +
+      "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:idAfter IS NULL OR d.id > :idAfter)",
+      countQuery = "SELECT count(d) FROM Department d " +
+          "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+          "AND (:idAfter IS NULL OR d.id > :idAfter)")
+  Page<Department> searchByIdOrder(@Param("keyword") String keyword, @Param("idAfter") Long idAfter, Pageable pageable);
+
+  //부서명순 정렬 (ASC)
+  @Query(value = "SELECT d FROM Department d " +
+      "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:cursor IS NULL OR (d.name > :cursor) OR (d.name = :cursor AND d.id > :idAfter))",
+      countQuery = "SELECT count(d) FROM Department d " +
+          "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%)")
+  Page<Department> searchByNameOrder(@Param("keyword") String keyword, @Param("cursor") String cursor, @Param("idAfter") Long idAfter, Pageable pageable);
+
+  //부서명순 정렬 (DESC)
+  @Query(value = "SELECT d FROM Department d " +
+      "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:cursor IS NULL OR d.name < :cursor OR (d.name = :cursor AND d.id < :idAfter))",
+      countQuery = "SELECT count(d) FROM Department d " +
+          "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%)")
+  Page<Department> searchByNameOrderDesc(@Param("keyword") String keyword, @Param("cursor") String cursor, @Param("idAfter") Long idAfter, Pageable pageable);
+
+  //설립일순 정렬 (ASC)
+  @Query(value = "SELECT d FROM Department d " +
+      "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:cursor IS NULL OR (d.establishedDate > :cursor) OR (d.establishedDate = :cursor AND d.id > :idAfter))",
+      countQuery = "SELECT count(d) FROM Department d " +
+          "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%)")
+  Page<Department> searchByDateOrder(@Param("keyword") String keyword, @Param("cursor") LocalDate cursor, @Param("idAfter") Long idAfter, Pageable pageable);
+
+  //설립일순 정렬 (DESC)
+  @Query(value = "SELECT d FROM Department d " +
+      "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%) " +
+      "AND (:cursor IS NULL OR d.establishedDate < :cursor OR (d.establishedDate = :cursor AND d.id < :idAfter))",
+      countQuery = "SELECT count(d) FROM Department d " +
+          "WHERE (:keyword IS NULL OR d.name LIKE %:keyword% OR d.description LIKE %:keyword%)")
+  Page<Department> searchByDateOrderDesc(@Param("keyword") String keyword, @Param("cursor") LocalDate cursor, @Param("idAfter") Long idAfter, Pageable pageable);
 }
