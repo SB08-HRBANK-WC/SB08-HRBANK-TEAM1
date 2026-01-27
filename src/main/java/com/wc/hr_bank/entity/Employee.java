@@ -1,10 +1,22 @@
 package com.wc.hr_bank.entity;
 
 import com.wc.hr_bank.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "employees")
@@ -20,7 +32,7 @@ public class Employee extends BaseUpdatableEntity
   @JoinColumn(name = "department_id", nullable = false)
   private Department department;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "file_id")
   private File profileImage;
 
@@ -48,16 +60,28 @@ public class Employee extends BaseUpdatableEntity
   /**
    * 비즈니스 로직: 직원 정보 수정 (사원 번호 제외)
    */
-  public void updateEmployee(String name, String email, String position,
-      EmployeeStatus status, Department department, File profileImage)
+  public Employee updateEmployee(String name, String email, String position,
+      EmployeeStatus status, Department department, File profileImage, LocalDate hireDate)
 
   {
+    Employee employee = new Employee();
+    employee.name = name;
+    employee.email = email;
+    employee.position = position;
+    employee.status = status;
+    employee.department = department;
+    employee.profileImage = profileImage;
+    employee.hireDate = hireDate;
+
     this.name = name;
     this.email = email;
-    this.position = position; // 🛠️ 필드명 변경 반영
+    this.position = position;
     this.status = status;
     this.department = department;
     this.profileImage = profileImage;
+    this.hireDate = hireDate;
+
+    return employee;
   }
 
 }
