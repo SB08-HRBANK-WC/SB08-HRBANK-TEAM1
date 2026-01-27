@@ -1,8 +1,11 @@
 package com.wc.hr_bank.dto.response.employee;
 
 import com.wc.hr_bank.entity.EmployeeStatus;
-import lombok.*;
 import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder

@@ -11,6 +11,7 @@ import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.mapper.EmployeeMapper;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.repository.EmployeeRepository;
+import com.wc.hr_bank.service.ChangeLogService;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
@@ -31,11 +32,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class EmployeeServiceImpl implements EmployeeService
 
 {
-
   private final EmployeeRepository employeeRepository;
   private final DepartmentRepository departmentRepository;
   private final EmployeeMapper employeeMapper;
   private final StringHttpMessageConverter stringHttpMessageConverter;
+  private final ChangeLogService changeLogService;
 
   @Override
   @Transactional
@@ -59,17 +60,46 @@ public class EmployeeServiceImpl implements EmployeeService
         .status(EmployeeStatus.ACTIVE)
         .department(department)
         .build();
+    Employee savedEmployee = employeeRepository.save(employee);
+    changeLogService.recordRegistration(savedEmployee, getSafeIp(servletRequest), request.memo());
 
-    return employeeMapper.toDto(employeeRepository.save(employee));
+    return employeeMapper.toDto(savedEmployee);
+  }
+
+  public String getSafeIp(HttpServletRequest request) {
+
+    String[] headers = {"X-Forwarded-For", "X-Real-IP"};
+
+    for (String header : headers) {
+      String ip = request.getHeader(header);
+      if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+        return ip.contains(",") ? ip.split(",")[0].trim() : ip;
+      }
+    }
+
+    return request.getRemoteAddr();
   }
 
   @Override
   @Transactional
-  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
+  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage,
+      HttpServletRequest servletRequest)
 
   {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다. ID: " + id));
+
+    //  보정 1: 수정 전 데이터를 별도 객체(Snapshot)로 복사
+    // recordModification에서 변경 전/후를 비교하려면 원본 데이터가 필요합니다
+    Employee oldEmployeeSnapshot = Employee.builder()
+        .name(employee.getName())
+        .email(employee.getEmail())
+        .position(employee.getPosition())
+        .status(employee.getStatus())
+        .department(employee.getDepartment())
+        .hireDate(employee.getHireDate())
+        .profileImage(employee.getProfileImage())
+        .build();
 
     if (request.email() != null && !request.email().equals(employee.getEmail()))
     {
@@ -86,26 +116,35 @@ public class EmployeeServiceImpl implements EmployeeService
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
     }
 
-    employee.updateEmployee(
+    Employee updatedEmployee = employee.updateEmployee(
         request.name() != null ? request.name() : employee.getName(),
         request.email() != null ? request.email() : employee.getEmail(),
         request.position() != null ? request.position() : employee.getPosition(),
         request.status() != null ? request.status() : employee.getStatus(),
         department,
-        employee.getProfileImage()
+        employee.getProfileImage(),
+        request.hireDate() != null ? request.hireDate() : employee.getHireDate()
     );
+
+    //  보정 2: 스냅샷과 현재 엔티티를 비교하여 기록
+    changeLogService.recordModification(oldEmployeeSnapshot,
+        employee, getSafeIp(servletRequest), request.memo());
 
     return employeeMapper.toDto(employee);
   }
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id)
+  public void deleteEmployee(Long id, HttpServletRequest servletRequest)
 
   {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
+
+    changeLogService.recordRemoval(employee, getSafeIp(servletRequest), "직원 삭제");
+
     employeeRepository.delete(employee);
+
   }
 
   @Override
@@ -193,7 +232,7 @@ public class EmployeeServiceImpl implements EmployeeService
     if (!content.isEmpty()) {
       // 마지막 아이템에서 ID 추출 (클래스 형식이므로 getId() 사용)
       EmployeeDto lastItem = content.get(content.size() - 1);
-      nextIdAfter = lastItem.getId(); // 🛠️ 에러 지점 수정
+      nextIdAfter = lastItem.getId();
 
       // Swagger 명세서 규격에 따른 Base64 인코딩 처리
       String cursorJson = "{\"id\":" + nextIdAfter + "}";

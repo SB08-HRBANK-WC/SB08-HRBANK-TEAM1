@@ -7,5 +7,6 @@ public record EmployeeCreateRequest(
     String email,
     Long departmentId,
     String position,
-    LocalDate hireDate
+    LocalDate hireDate,
+    String memo
 ) {}
