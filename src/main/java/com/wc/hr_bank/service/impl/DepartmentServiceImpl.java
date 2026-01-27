@@ -7,14 +7,14 @@ import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.mapper.DepartmentMapper;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.service.DepartmentService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -52,55 +52,40 @@ public class DepartmentServiceImpl implements DepartmentService
         String sortField,
         String sortDirection) {
 
-        // 1. 커서 처리 (프론트의 cursor 문자열을 Long targetId로 변환)
-        Long targetId = idAfter;
-        if (targetId == null && cursor != null && !cursor.isBlank()) {
+        // 1. 교통정리 (기존 로직 유지)
+        Long effectiveIdAfter = idAfter;
+        if (effectiveIdAfter == null && cursor != null && !cursor.isBlank()) {
             try {
-                targetId = Long.parseLong(cursor);
+                effectiveIdAfter = Long.parseLong(cursor);
             } catch (NumberFormatException e) {
-                // 유효하지 않은 커서 형식일 경우 첫 페이지 조회(null 유지)
+                effectiveIdAfter = null;
             }
         }
 
-        //정렬 설정: Swagger 명세에 맞춰 ASC와 establishedDate를 기본값으로 설정
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        // 기본 정렬 필드를 establishedDate로 변경
-        String field = (sortField == null || sortField.isBlank()) ? "establishedDate" : sortField;
+        // 2. 페이징 설정
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.ASC, "id"));
 
-        //다음 페이지 여부 확인을 위해 size + 1을 조회
-        Pageable pageable = PageRequest.of(0, size + 1, Sort.by(direction, field));
+        // 3. 리포지토리 조회 (Page 객체로 받기)
+        Page<Department> page = departmentRepository.searchByKeyword(nameOrDescription, effectiveIdAfter, pageable);
 
-        //데이터 조회 및 DTO 변환
-        String keyword = (nameOrDescription == null) ? "" : nameOrDescription;
-        List<DepartmentDto> allContent = departmentRepository.searchByKeyword(keyword, targetId, pageable)
-            .stream()
+        // 4. 컨텐츠 변환 (Entity -> Dto)
+        List<DepartmentDto> content = page.getContent().stream()
             .map(departmentMapper::toDto)
             .toList();
 
-        // 4. 다음 페이지 판별 및 데이터 절삭
-        boolean hasNext = allContent.size() > size;
-        List<DepartmentDto> content = hasNext ? allContent.subList(0, size) : allContent;
+        // 5. 다음 페이지를 위한 커서/ID 계산
+        // 데이터가 있으면 마지막 데이터의 ID를 가져오고, 없으면 null
+        Long nextIdAfter = content.isEmpty() ? null : content.get(content.size() - 1).id();
+        String nextCursor = (nextIdAfter != null) ? String.valueOf(nextIdAfter) : null;
 
-        // 5. 응답용 커서 정보 생성
-        String nextCursor = null;
-        Long nextIdAfter = null;
-        if (!content.isEmpty()) {
-            DepartmentDto lastItem = content.get(content.size() - 1);
-            nextCursor = String.valueOf(lastItem.id());
-            nextIdAfter = lastItem.id();
-        }
-
-        // 6. 전체 개수 조회 (팀 공통 규격)
-        long totalElements = departmentRepository.count();
-
-        // 7. 최종 결과 반환
+        // 6. 팀 규격 DTO 생성 및 반환
         return new DepartmentCursorPageResponse(
             content,
             nextCursor,
             nextIdAfter,
-            size,
-            totalElements,
-            hasNext
+            page.getSize(),
+            page.getTotalElements(),
+            page.hasNext() // 다음 페이지 존재 여부
         );
     }
 
