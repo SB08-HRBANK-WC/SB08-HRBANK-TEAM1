@@ -7,6 +7,7 @@ import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.mapper.DepartmentMapper;
 import com.wc.hr_bank.repository.DepartmentRepository;
 import com.wc.hr_bank.service.DepartmentService;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,33 +53,44 @@ public class DepartmentServiceImpl implements DepartmentService
         String sortField,
         String sortDirection) {
 
-        // 1. 교통정리 (기존 로직 유지)
-        Long effectiveIdAfter = idAfter;
-        if (effectiveIdAfter == null && cursor != null && !cursor.isBlank()) {
-            try {
-                effectiveIdAfter = Long.parseLong(cursor);
-            } catch (NumberFormatException e) {
-                effectiveIdAfter = null;
-            }
+        //기본 정렬 설정
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        Pageable pageable = PageRequest.of(0, size, Sort.by(direction, sortField).and(Sort.by(direction, "id")));
+
+        //정렬 필드별 쿼리 분기 처리
+        Page<Department> page;
+        if ("name".equals(sortField)) {
+            //이름순 정렬: cursor 문자열 그대로 사용
+            page = departmentRepository.searchByNameOrder(nameOrDescription, cursor, idAfter, pageable);
+        } else if ("establishedDate".equals(sortField)) {
+            //날짜순 정렬: cursor를 Instant로 변환
+            Instant dateCursor = (cursor != null && !cursor.isBlank()) ? Instant.parse(cursor) : null;
+            page = departmentRepository.searchByDateOrder(nameOrDescription, dateCursor, idAfter, pageable);
+        } else {
+            //기본 ID순 정렬
+            page = departmentRepository.searchByIdOrder(nameOrDescription, idAfter, pageable);
         }
 
-        // 2. 페이징 설정
-        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.ASC, "id"));
-
-        // 3. 리포지토리 조회 (Page 객체로 받기)
-        Page<Department> page = departmentRepository.searchByKeyword(nameOrDescription, effectiveIdAfter, pageable);
-
-        // 4. 컨텐츠 변환 (Entity -> Dto)
+        //데이터 변환 (Entity -> Dto)
         List<DepartmentDto> content = page.getContent().stream()
             .map(departmentMapper::toDto)
             .toList();
 
-        // 5. 다음 페이지를 위한 커서/ID 계산
-        // 데이터가 있으면 마지막 데이터의 ID를 가져오고, 없으면 null
-        Long nextIdAfter = content.isEmpty() ? null : content.get(content.size() - 1).id();
-        String nextCursor = (nextIdAfter != null) ? String.valueOf(nextIdAfter) : null;
+        //다음 페이지를 위한 커서 정보 생성
+        String nextCursor = null;
+        Long nextIdAfter = null;
 
-        // 6. 팀 규격 DTO 생성 및 반환
+        if (!content.isEmpty()) {
+            DepartmentDto lastItem = content.get(content.size() - 1);
+            nextIdAfter = lastItem.id();
+            // 정렬 기준에 따라 다음 커서에 넣어줄 값 결정
+            nextCursor = switch (sortField) {
+                case "name" -> lastItem.name();
+                case "establishedDate" -> lastItem.establishedDate().toString();
+                default -> String.valueOf(lastItem.id());
+            };
+        }
+        //DTO 생성 및 반환
         return new DepartmentCursorPageResponse(
             content,
             nextCursor,
