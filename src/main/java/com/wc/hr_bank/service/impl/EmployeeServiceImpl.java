@@ -276,4 +276,16 @@ public class EmployeeServiceImpl implements EmployeeService
 
     return newDist;
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate) {
+    // toDate: null이면 현재 날짜 (오늘까지의 입사자)
+    LocalDate defaultToDate = (toDate == null) ? LocalDate.now() : toDate;
+
+    // fromDate: null이면 시스템 시작일 혹은 충분히 과거의 날짜 (전체 조회)
+    LocalDate defaultFromDate = (fromDate == null) ? LocalDate.of(1900, 1, 1) : fromDate;
+
+    return employeeRepository.countByPeriod(status, defaultFromDate, defaultToDate);
+  }
 }

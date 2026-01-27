@@ -200,4 +200,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
       String groupBy,
       EmployeeStatus status
   );
+
+  @Query("""
+      SELECT COUNT(e)
+      FROM Employee e 
+      WHERE e.status = :status 
+            AND e.hireDate BETWEEN :fromDate AND :toDate
+      """
+  )
+  Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
 }

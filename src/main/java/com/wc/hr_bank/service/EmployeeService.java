@@ -8,6 +8,7 @@ import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,4 +51,14 @@ public interface EmployeeService
    * @return 기준별 인원수와 그룹명을 담은 통계 DTO 리스트
    */
   List<EmployeeDistDto> getEmployeesDist(String groupBy, EmployeeStatus status);
+
+  /**
+   * 직원의 상태, 입사 시작일, 입사 종료일 기준으로 총합 인원수를 구합니다.
+   *
+   * @param status
+   * @param fromDate
+   * @param toDate
+   * @return
+   */
+  Long countByPeriod(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
 }

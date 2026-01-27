@@ -10,6 +10,7 @@ import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -100,6 +101,17 @@ public class EmployeeController implements EmployeeApi
       @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status
   ) {
     List<EmployeeDistDto> result = employeeService.getEmployeesDist(groupBy, status);
+
+    return ResponseEntity.ok(result);
+  }
+
+  @GetMapping("/count")
+  public ResponseEntity<Long> getEmployeeCount(
+      @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status,
+      @RequestParam(required = false) LocalDate fromDate,
+      @RequestParam(required = false) LocalDate toDate
+  ) {
+    Long result = employeeService.countByPeriod(status, fromDate, toDate);
 
     return ResponseEntity.ok(result);
   }

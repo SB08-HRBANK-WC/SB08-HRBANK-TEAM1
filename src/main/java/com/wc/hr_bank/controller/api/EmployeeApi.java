@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -114,5 +115,45 @@ public interface EmployeeApi
               "RESIGNED"})
       )
       EmployeeStatus status
+  );
+
+  @Operation(summary = "직원 수 조회", description = "지정된 조건에 맞는 직원 수를 조회합니다. 상태 필터링 및 입사일 기간 필터링이 가능합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200", description = "조회 성공",
+          content = @Content(schema = @Schema(implementation = Long.class))
+      ),
+      @ApiResponse(
+          responseCode = "404", description = "조회 실패",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+      ),
+      @ApiResponse(
+          responseCode = "500", description = "서버 오류",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+      )
+  })
+  ResponseEntity<Long> getEmployeeCount(
+      @Parameter(
+          name = "status",
+          description = "직원 상태- 재직중(기본값), 휴직중, 퇴사",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = String.class, allowableValues = {"ACTIVE", "ON_LEAVE",
+              "RESIGNED"})
+      )
+      EmployeeStatus status,
+      @Parameter(
+          name = "fromDate",
+          description = "입사일 시작 (지정 시 해당 기간 내 입사한 직원 수 조회, 미지정 시 전체 직원 수 조회)",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = LocalDate.class)
+      )
+      LocalDate fromDate,
+      @Parameter(
+          name = "toDate",
+          description = "입사일 종료 (fromDate와 함께 사용, 기본값: 현재 일시)",
+          in = ParameterIn.QUERY,
+          schema = @Schema(implementation = LocalDate.class)
+      )
+      LocalDate toDate
   );
 }
