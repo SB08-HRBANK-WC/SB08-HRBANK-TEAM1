@@ -1,9 +1,8 @@
 package com.wc.hr_bank.service;
 
 import com.wc.hr_bank.dto.request.department.DepartmentRequest;
+import com.wc.hr_bank.dto.response.department.DepartmentCursorPageResponse;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
-
-import java.util.List;
 
 public interface DepartmentService
 {
@@ -19,7 +18,14 @@ public interface DepartmentService
      * 모든 부서 목록 조회,
      *
      */
-    List<DepartmentDto> getAllDepartments();
+    DepartmentCursorPageResponse getAllDepartments(
+        String nameOrDescription,
+        Long idAfter,
+        String cursor,
+        int size,
+        String sortField,
+        String sortDirection
+    );
 
     /**
      * 특정 부서 상세 조회,

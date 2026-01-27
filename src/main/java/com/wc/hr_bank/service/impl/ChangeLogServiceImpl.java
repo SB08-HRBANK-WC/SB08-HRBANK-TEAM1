@@ -1,7 +1,10 @@
 package com.wc.hr_bank.service.impl;
 
 
+import com.wc.hr_bank.dto.request.changelog.ChangeLogRequest;
 import com.wc.hr_bank.dto.response.changelog.ChangeLogDetailDto;
+import com.wc.hr_bank.dto.response.changelog.ChangeLogDto;
+import com.wc.hr_bank.dto.response.changelog.CursorPageResponseChangeLogDto;
 import com.wc.hr_bank.entity.ChangeLog;
 import com.wc.hr_bank.entity.ChangeType;
 import com.wc.hr_bank.entity.Department;
@@ -15,10 +18,13 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +35,107 @@ public class ChangeLogServiceImpl implements ChangeLogService
 {
   private final ChangeLogRepository changeLogRepository;
   private final ChangeLogMapper changeLogMapper;
+
+  private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+
+  /**
+   * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
+   * @param request
+   * @return
+   */
+  @Override
+  public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request) {
+    Pageable pageable = PageRequest.of(0, request.size());
+
+    // 정렬 필드 - ipAddress, at
+    String sortField = request.sortField();
+    // 정렬 방향 - asc, desc
+    String sortDirection = request.sortDirection();
+
+    List<ChangeLog> logs = List.of();
+
+    String employeeNumber = request.employeeNumber();
+    ChangeType type = request.type();
+    String memo = request.memo();
+    String ipAddress = request.ipAddress();
+
+    Instant atFrom = convertToInstant(request.atFrom());
+    Instant atTo = convertToInstant(request.atTo());
+
+    Long idAfter = request.idAfter();
+    String cursor = request.cursor();
+
+    logs = switch (sortField) {
+      case "at" -> {
+        Instant cursorAt = (cursor != null && !cursor.isBlank())
+            ? convertToInstant(LocalDateTime.parse(request.cursor()))
+            : null;
+
+        yield "desc".equals(sortDirection)
+            ? changeLogRepository.findByAtDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable)
+            : changeLogRepository.findByAtAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable);
+      }
+
+      case "ipAddress" -> "desc".equals(sortDirection)
+            ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
+            : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
+      default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다: " + sortField);
+    };
+
+    List<ChangeLogDto> content = logs.stream()
+        .map(changeLogMapper::toLogDto)
+        .toList();
+
+    boolean hasNext = content.size() >= request.size();
+    Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
+
+    return buildResponse(content, sortField, request.size(), totalElements, hasNext);
+  }
+
+  /**
+   * DateTime -> Instant 변환
+   * @param datetime
+   * @return
+   */
+  private Instant convertToInstant(LocalDateTime datetime) {
+    if (datetime == null) {
+      return null;
+    }
+    Instant instant = datetime.atZone(KOREA_ZONE).toInstant();
+    return instant;
+  }
+
+  /**
+   * 커서 관련 헬퍼 메서드
+   * @param content
+   * @param sortField
+   * @param size
+   * @param totalElements
+   * @param hasNext
+   * @return
+   */
+  private CursorPageResponseChangeLogDto buildResponse(
+      List<ChangeLogDto> content,
+      String sortField, int size,
+      Long totalElements, boolean hasNext) {
+
+      String nextCursor = null;
+      Long nextIdAfter = 0L;
+
+      if (!content.isEmpty()) {
+        ChangeLogDto lastItem = content.get(content.size() - 1);
+        nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
+        nextIdAfter = lastItem.id();
+      }
+      return changeLogMapper.toCursorPageResponse(
+          content,
+          nextCursor,
+          nextIdAfter,
+          size,
+          totalElements,
+          hasNext
+      );
+  }
 
   /**
    * 특정 이력 상세 정보 조회
@@ -50,10 +157,8 @@ public class ChangeLogServiceImpl implements ChangeLogService
    */
   @Override
   public Long countByPeriod(LocalDateTime from, LocalDateTime to) {
-    // LocalDateTime -> Instant
-    Instant fromInstant = from.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-    Instant toInstant = to.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-
+    Instant fromInstant = convertToInstant(from);
+    Instant toInstant = convertToInstant(to);
     return changeLogRepository.countLogsByPeriod(fromInstant, toInstant);
   }
 
@@ -122,6 +227,8 @@ public class ChangeLogServiceImpl implements ChangeLogService
   private void saveLog(ChangeLog log, Employee oldE, Employee newE, ChangeType type) {
     compareAndRecord(log, LogPropertyType.EMPLOYEE_NAME, oldE, newE, Employee::getName, type);
 
+    compareAndRecord(log, LogPropertyType.EMPLOYEE_NUMBER, oldE, newE, Employee::getEmployeeNumber, type);
+
     compareAndRecord(log, LogPropertyType.EMAIL, oldE, newE, Employee::getEmail, type);
 
     compareAndRecord(log, LogPropertyType.JOB_TITLE, oldE, newE, Employee::getJobTitle, type);
@@ -181,7 +288,7 @@ public class ChangeLogServiceImpl implements ChangeLogService
    * @param <T>
    * @param <R>
    */
-  private <T, R> String transform(T target, Function<T, R> mapper) {
+  private <Employee, R> String transform(Employee target, Function<Employee, R> mapper) {
     return Optional.ofNullable(target)
         .map(mapper)
         .map(String::valueOf)
