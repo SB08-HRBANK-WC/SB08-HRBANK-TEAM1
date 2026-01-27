@@ -1,7 +1,6 @@
 package com.wc.hr_bank.repository;
 
 import com.wc.hr_bank.entity.Department;
-import java.time.Instant;
 import java.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
