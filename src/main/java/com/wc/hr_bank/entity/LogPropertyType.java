@@ -11,9 +11,9 @@ public enum LogPropertyType
   EMPLOYEE_NUMBER("employeeNumber"),
   PROFILE_IMAGE("image"),
   EMAIL("email"),
-  JOB_TITLE("position"),
+  POSITION("position"),
   DEPARTMENT("department"),
-  JOINED_AT("hireDate"),
+  HIRE_DATE("hireDate"),
   STATUS("status");
 
   private final String label;
