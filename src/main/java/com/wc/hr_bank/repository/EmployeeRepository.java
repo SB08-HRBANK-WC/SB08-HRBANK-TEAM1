@@ -182,4 +182,22 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
       @Param("idAfter") Long idAfter,
       Pageable pageable
   );
+
+  @Query("""
+      SELECT
+          (CASE
+              WHEN :groupBy = 'department' THEN d.name
+              ELSE e.position
+          END) AS groupKey,
+          COUNT(e) AS count,
+         (COUNT(e) * 100) / SUM(COUNT(e)) OVER() AS percentage
+      FROM Employee e
+      JOIN e.department d
+      WHERE e.status = :status
+      GROUP BY :groupBy
+      """)
+  List<Object[]> getEmployeesDist(
+      String groupBy,
+      EmployeeStatus status
+  );
 }

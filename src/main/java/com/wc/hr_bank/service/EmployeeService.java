@@ -4,8 +4,11 @@ import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
+import com.wc.hr_bank.entity.EmployeeStatus;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -39,5 +42,12 @@ public interface EmployeeService
 
   CursorPageResponseEmployeeDto getEmployees(EmployeeListRequest request);
 
-
+  /**
+   * 직원의 부서별 또는 직무별 인원 분포를 집계합니다.
+   *
+   * @param groupBy 집계 기준 (기준: 'department' 또는 'jobTitle') - 기본값: department
+   * @param status  조회할 직원의 상태 (예: 재직, 퇴사 등) - 기본값: 재직
+   * @return 기준별 인원수와 그룹명을 담은 통계 DTO 리스트
+   */
+  List<EmployeeDistDto> getEmployeesDist(String groupBy, EmployeeStatus status);
 }

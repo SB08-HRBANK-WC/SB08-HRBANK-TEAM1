@@ -1,5 +1,6 @@
 package com.wc.hr_bank.mapper;
 
+import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.Employee;
 import org.mapstruct.Mapper;
@@ -22,4 +23,5 @@ public interface EmployeeMapper
 
   EmployeeDto toDto(Employee employee);
 
+  EmployeeDistDto toEmployeeDistDto(String groupKey, Long count, Double percentage);
 }

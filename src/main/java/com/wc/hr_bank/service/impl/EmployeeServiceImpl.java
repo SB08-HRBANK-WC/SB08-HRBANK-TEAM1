@@ -4,6 +4,7 @@ import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
 import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
 import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
+import com.wc.hr_bank.dto.response.employee.EmployeeDistDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
 import com.wc.hr_bank.entity.Department;
 import com.wc.hr_bank.entity.Employee;
@@ -15,6 +16,7 @@ import com.wc.hr_bank.service.ChangeLogService;
 import com.wc.hr_bank.service.EmployeeService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -256,5 +258,22 @@ public class EmployeeServiceImpl implements EmployeeService
   {
     return employeeRepository.findById(id).map(employeeMapper::toDto)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<EmployeeDistDto> getEmployeesDist(String groupBy, EmployeeStatus status) {
+    List<Object[]> dist = employeeRepository.getEmployeesDist(groupBy, status);
+    List<EmployeeDistDto> newDist = new ArrayList<>();
+
+    for (Object[] d : dist) {
+      String str = (String) d[0];
+      Long lon = ((Number) d[1]).longValue();
+      Double dbl = ((Number) d[2]).doubleValue();
+
+      newDist.add(employeeMapper.toEmployeeDistDto(str, lon, dbl));
+    }
+
+    return newDist;
   }
 }
