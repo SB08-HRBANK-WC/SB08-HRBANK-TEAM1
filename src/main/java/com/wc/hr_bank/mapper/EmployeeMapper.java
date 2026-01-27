@@ -14,12 +14,12 @@ public interface EmployeeMapper
 
 {
 
-    @Mapping(target = "departmentId", source = "department.id")
-    @Mapping(target = "departmentName", source = "department.name")
-    @Mapping(target = "position", source = "jobTitle")
-    @Mapping(target = "hireDate", source = "joinedAt")
-    @Mapping(target = "status", expression = "java(employee.getStatus() != null ? employee.getStatus().getDescription() : \"재직중\")")
-    @Mapping(target = "profileImageId", source = "profileImage.id")
-    EmployeeDto toDto(Employee employee);
+  @Mapping(target = "departmentId", source = "department.id")
+  @Mapping(target = "departmentName", source = "department.name")
+  @Mapping(target = "profileImageId", source = "profileImage.id")
+  // 1. Enum 타입 필드에는 Enum 객체 자체를 매핑 (빌드 에러 방지)
+  @Mapping(target = "status", source = "status")
+
+  EmployeeDto toDto(Employee employee);
 
 }

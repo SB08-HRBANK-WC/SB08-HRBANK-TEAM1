@@ -1,7 +1,11 @@
 package com.wc.hr_bank.dto.response.employee;
 
-import lombok.*;
+import com.wc.hr_bank.entity.EmployeeStatus;
 import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
@@ -18,6 +22,6 @@ public class EmployeeDto
   private String departmentName;
   private String position;
   private LocalDate hireDate;
-  private String status;
+  private EmployeeStatus status;
   private Long profileImageId;
 }

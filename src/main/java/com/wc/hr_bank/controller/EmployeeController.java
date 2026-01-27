@@ -2,80 +2,89 @@ package com.wc.hr_bank.controller;
 
 import com.wc.hr_bank.controller.api.EmployeeApi;
 import com.wc.hr_bank.dto.request.employee.EmployeeCreateRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeListRequest;
+import com.wc.hr_bank.dto.request.employee.EmployeeUpdateRequest;
+import com.wc.hr_bank.dto.response.employee.CursorPageResponseEmployeeDto;
 import com.wc.hr_bank.dto.response.employee.EmployeeDto;
-import com.wc.hr_bank.entity.EmployeeStatus;
 import com.wc.hr_bank.service.EmployeeService;
-import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.util.Map;
-
 @RestController
+@RequestMapping("/api/employees")
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/employees")
 public class EmployeeController implements EmployeeApi
+
 {
 
   private final EmployeeService employeeService;
 
   @Override
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<EmployeeDto> createEmployee(
-      @RequestPart("employee") EmployeeCreateRequest request,
-      @RequestPart(value = "profile", required = false) MultipartFile profileImage,
-      HttpServletRequest servletRequest
-  )
+      @RequestPart("request") EmployeeCreateRequest request,
+      @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
+      HttpServletRequest servletRequest)
+
   {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(employeeService.createEmployee(request, profileImage, servletRequest));
   }
 
   @Override
+  @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+  public ResponseEntity<EmployeeDto> updateEmployee(
+      @PathVariable Long id,
+      @RequestPart("request") EmployeeUpdateRequest request,
+      @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
+      HttpServletRequest servletRequest)
+
+  {
+    return ResponseEntity.ok(employeeService.updateEmployee(id, request, profileImage, servletRequest));
+  }
+
+  @Override
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteEmployee(@PathVariable Long id, HttpServletRequest servletRequest)
+
+  {
+    employeeService.deleteEmployee(id, servletRequest);
+    // 명세서 규격: 삭제 성공 시 204 반환
+    return ResponseEntity.noContent().build();
+  }
+
+
+  @Override
   @GetMapping("/{id}")
   public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id)
+
   {
     return ResponseEntity.ok(employeeService.getEmployeeById(id));
   }
 
-  @Override
-  public ResponseEntity<Map<String, Object>> getEmployees(String nameOrEmail, String employeeNumber,
-      String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo,
-      EmployeeStatus status, Long idAfter, int size, String sortField, String sortDirection) {
-    return null;
-  }
-
+  /**
+   * 피드백 반영: 개별 파라미터 대신 EmployeeListRequest(Record)를 사용하여 코드를 단순화하고 서비스 계층으로 전달합니다.
+   */
   @Override
   @GetMapping
-  public ResponseEntity<Map<String, Object>> getEmployees(
-      @RequestParam(required = false) String nameOrEmail,
-      @RequestParam(required = false) String employeeNumber,
-      @RequestParam(required = false) String departmentName,
-      @RequestParam(required = false) String position,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hireDateFrom,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hireDateTo,
-      @RequestParam(required = false) EmployeeStatus status,
-      @RequestParam(required = false) Long idAfter,
-      @Parameter(description = "커서 (다음 페이지 시작점)")
-      @RequestParam(required = false) String cursor,
+  public ResponseEntity<CursorPageResponseEmployeeDto> getEmployees(@ModelAttribute EmployeeListRequest request)
 
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "hireDate") String sortField,
-      @RequestParam(defaultValue = "asc") String sortDirection
-  )
   {
-    // 서비스 호출 시 cursor 파라미터도 함께 전달합니다.
-    Map<String, Object> result = employeeService.getEmployees(
-        nameOrEmail, employeeNumber, departmentName, position,
-        hireDateFrom, hireDateTo, status, idAfter, cursor, size, sortField, sortDirection
-    );
-    return ResponseEntity.ok(result);
+    CursorPageResponseEmployeeDto employees = employeeService.getEmployees(request);
+    return ResponseEntity.ok(employees);
   }
+
 }
