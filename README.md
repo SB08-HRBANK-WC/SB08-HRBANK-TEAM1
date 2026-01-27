@@ -1,22 +1,13 @@
 # TEAM WOONG-CHICKEN
 
-## TEAM ([NOTION 📋]((https://ohgiraffers.notion.site/1-2ee649136c118001a6bff62d4a602748?source=copy_link)))
+## TEAM ([NOTION]((https://ohgiraffers.notion.site/1-2ee649136c118001a6bff62d4a602748?source=copy_link)))
 | <img src="https://github.com/Junkov0.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/xxzeroeight.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/castle-bird.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/idktomorrow.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/seungwon00.png" width="100" style="border-radius:50%"/> |
 |:---------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------|
 |                                      **최준영**                                      |                                        **김경태**                                        |                                        **박성조**                                        |                                        **선웅제**                                        | **현승원**                                                                              |
 |                      [@Junkov0](https://github.com/Junkov0)                       |                    [@xxzeroeight](https://github.com/xxzeroeight)                     |                    [@castle-bird](https://github.com/castle-bird)                     |                    [@idktomorrow](https://github.com/idktomorrow)                     | [@seungwon00](https://github.com/seungwon00)                                         |
 |                                 팀장, PM, 수정 이력 관리                                  |                                     형상 관리, 백업 관리                                      |                                     문서 관리, 파일 관리                                      |                                     DB 관리, 부서 관리                                      | DB 관리, 직원 관리                                                                         |
 
-1. 프로젝트 개요 (1분)
-2. 팀 소개 (이미지+이름) 간단하게 (30~1분)
-3. 주요 기능 -> 하위 기술 상세 (o1) (3분)
-4. 기술 스택 (30초)
-5. 브랜치 전략, 컨벤션, 코드 리뷰 프로세스 (1분~1분 30초)
-6. 프로젝트 구조 (이런 구조를 선택한 이유) (1분)
-7. ERD (ERD넣고 이미지 사이즈를 보고, 이런 ERD를 선택한 이유) (2분)
-8. 트러블 슈팅, 기술적 도전과제 (2분~3분)
-   9. 작업 시 병목 현상
-10. 시연 (3분)
+<br/>
 
 ## 프로젝트 개요
 ### 프로젝트 소개
@@ -26,6 +17,8 @@
 - **기간**: 2026.01.19 ~ 2026.01.29
 - **인원**: 5명
 - **역할**: HR 관리 시스템의 Backend 개발
+
+<br/>
 
 ## 주요 기능
 부서 관리
@@ -42,6 +35,8 @@
 
 수정 이력 관리
 - 수정 이력과 수정 이력 상세를 관리합니다.
+
+<br/>
 
 ## 🛠 기술 스택
 #### Backend
@@ -65,6 +60,8 @@
 #### Deployment
 - **Railway.io**
 
+<br/>
+
 ## 구현 기능 상세
 최준영
 [움짤]
@@ -85,6 +82,8 @@
 현승원
 [움짤]
 - 주요 기능보다 자세히 설명
+
+<br/>
 
 ## 프로젝트 구조
 ```markdown
@@ -126,8 +125,12 @@
                 └── schema.sql
 ```
 
+<br/>
+
 ## API 문서
 [API 문서]()
+
+<br/>
 
 ## 구현 사이트 (데모)
 [구현 사이트]()
