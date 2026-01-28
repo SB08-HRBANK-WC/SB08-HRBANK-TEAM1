@@ -1,14 +1,13 @@
-# TEAM WOONG-CHICKEN
-
-## TEAM
+## TEAM WOONG CHICKEN
 | <img src="https://github.com/Junkov0.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/xxzeroeight.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/castle-bird.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/idktomorrow.png" width="100" style="border-radius:50%"/> | <img src="https://github.com/seungwon00.png" width="100" style="border-radius:50%"/> |
 |:---------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------|
 |                                      **최준영**                                      |                                        **김경태**                                        |                                        **박성조**                                        |                                        **선웅제**                                        | **현승원**                                                                              |
 |                      [@Junkov0](https://github.com/Junkov0)                       |                    [@xxzeroeight](https://github.com/xxzeroeight)                     |                    [@castle-bird](https://github.com/castle-bird)                     |                    [@idktomorrow](https://github.com/idktomorrow)                     | [@seungwon00](https://github.com/seungwon00)                                         |
 |                                 팀장, PM, 수정 이력 관리                                  |                                     형상 관리, 백업 관리                                      |                                     문서 관리, 파일 관리                                      |                                     DB 관리, 부서 관리                                      | DB 관리, 직원 관리                                                                         |
 
-[TEAM NOTION]((https://ohgiraffers.notion.site/1-2ee649136c118001a6bff62d4a602748?source=copy_link))
 <br/>
+
+[TEAM NOTION](https://ohgiraffers.notion.site/1-2ee649136c118001a6bff62d4a602748?source=copy_link)
 
 ## 프로젝트 개요
 ### 프로젝트 명
@@ -51,7 +50,7 @@ HR BANK
 
 #### Database
 - **H2** 2.3.232 (dev)
-- **PostgreSQL** 18.1 (prod)
+- **PostgreSQL** 17.7 (prod)
 
 #### Build Tool
 - **Gradle** 8.14.3
@@ -111,7 +110,7 @@ HR BANK
 ![대시보드 관리](https://cdn.discordapp.com/attachments/1432587976189153357/1465962028295258344/cbf5212419b95b48.gif?ex=697b0307&is=6979b187&hm=885a627ab42da09ce34912a7dcee16f1a1956f647ebfb6bc8a900929fecd6b84&)
 
 파일 I/O 연결 계층 개발
-- 다양한 파일 유형(프로필 이미지 .jpg/png, 백업 .csv, 로그 .log)을 확장자별 분리 저장하는 I/O 연결 계층 개발
+- 다양한 파일 유형(프로필 이미지.jpg/png, 백업.csv, 로그.log)을 확장자별 분리 저장하는 I/O 연결 계층 개발
 - Stream Interface로 호출자 생산성 극대화 (OutputStream save(), InputStream get())
 - RESTful 다운로드 API 완성 (GET /files/{id}/download)
 - 확장성: 화이트리스트 + Switch Expression
@@ -153,21 +152,20 @@ No-Offset 페이징 아키텍처
 ### **현승원 (직원 관리)**
 ![직원 관리](https://cdn.discordapp.com/attachments/1432587976189153357/1465961854873505802/a19a513e84b174a7.gif?ex=697b02de&is=6979b15e&hm=977483c07177f1ced4c95179172d6209af0d888ddc1915831b44409f617092d8&)
 
-직원 관리 시스템 상세 기능
-- 고성능 목록 조회 (Cursor Pagination)
-    - 커서 기반 페이징 및 다중 조건 동적 쿼리
-    - 대용량 데이터에서도 성능 저하 없는 안정적인 조회 로직 구현
-    - Offset 방식의 한계를 극복하여 일정한 시스템 응답 속도 유지
+고성능 목록 조회 (Cursor Pagination)
+   - 커서 기반 페이징 및 다중 조건 동적 쿼리  
+   - 정렬 필드(이름/입사일/사원번호)별 최적화 쿼리 분기 처리 및 다중 조건(부서/직급/상태/기간) 필터링 지원  
+   - Offset 방식의 한계를 극복하여 일정한 시스템 응답 속도 유지
 
 투명한 변경 이력 관리 (Audit Trail)
-- 엔티티 스냅샷 비교 및 ChangeLog 자동 기록
-    - 수정 전/후 데이터를 객체 단위로 비교하여 변경 사항 전수 추적
-    - 누가, 언제, 어떤 데이터를 고쳤는지 기록하여 인사 데이터 무결성 보장
+   - 엔티티 스냅샷 비교 및 ChangeLog 자동 기록  
+   - 수정 전/후 데이터를 객체 단위로 비교하여 변경 사항 전수 추적  
+   - 누가, 언제, 어떤 데이터를 고쳤는지 기록하여 인사 데이터 무결성 보장
 
 안정적인 사원 정보 관리 (Employee CRUD)
-- MultipartFile 처리 및 비즈니스 예외 설계
-    - 프로필 이미지 선택 사항화(Optional)로 등록/수정 시 안정성 확보
-    - 이메일 중복 검증 등 철저한 예외 처리로 데이터 오류 원천 차단
+   - UUID 기반 사원번호 자동 생성 및 MultipartFile 처리  
+   - 이미지 타입 검증(jpeg/png/webp), 이메일 중복 체크, 퇴사자 삭제 방지 등 비즈니스 규칙 적용  
+   - 철저한 예외 처리로 데이터 오류 원천 차단
 
 <br/>
 
