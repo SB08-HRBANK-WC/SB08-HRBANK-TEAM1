@@ -66,6 +66,11 @@ public class FileStorageImpl implements FileStorage
     String contentType = findFile.getContentType();
     Long fileSize = findFile.getFileSize();
 
+      if (!fileName.contains(".")) {
+          String extension = getExtensionFromContentType(contentType);
+          fileName = fileName + extension;
+      }
+
     // getPath(): ID와 contentType으로 파일이 저장된 위치를 찾습니다.
     Path targetPath = getPath(fileId, contentType);
 
@@ -89,6 +94,16 @@ public class FileStorageImpl implements FileStorage
       throw new RuntimeException("파일 다운로드에 실패하였습니다.");
     }
   }
+
+    private String getExtensionFromContentType(String contentType) {
+        return switch (contentType) {
+            case "text/csv" -> ".csv";
+            case "application/pdf" -> ".pdf";
+            case "image/png" -> ".png";
+            case "image/jpeg" -> ".jpg";
+            default -> ".txt";
+        };
+    }
 
   /**
    * Helper,
