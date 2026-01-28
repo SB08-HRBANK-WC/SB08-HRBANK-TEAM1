@@ -4,6 +4,7 @@ import com.wc.hr_bank.dto.request.department.DepartmentRequest;
 import com.wc.hr_bank.dto.response.department.DepartmentDto;
 import com.wc.hr_bank.entity.Department;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
@@ -21,11 +22,12 @@ public interface DepartmentMapper
      */
     Department toEntity(DepartmentRequest request);
 
-        /**
+    /**
      * department entity를 응답용 dto로 변환하는 메서드,
      *
      * @param department department entity 객체
      * @return 변환된 department dto 객체
      */
+    @Mapping(target = "employeeCount", expression = "java(department.getEmployees() != null ? (long)department.getEmployees().size() : 0L)")
     DepartmentDto toDto(Department department);
 }
