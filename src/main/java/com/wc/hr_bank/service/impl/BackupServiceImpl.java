@@ -3,10 +3,8 @@ package com.wc.hr_bank.service.impl;
 import com.wc.hr_bank.dto.request.backup.BackupCursorPageRequest;
 import com.wc.hr_bank.dto.response.backup.BackupCursorPageResponseDto;
 import com.wc.hr_bank.dto.response.backup.BackupDto;
-import com.wc.hr_bank.entity.Backup;
-import com.wc.hr_bank.entity.Employee;
-import com.wc.hr_bank.entity.File;
-import com.wc.hr_bank.entity.StatusType;
+import com.wc.hr_bank.entity.*;
+import com.wc.hr_bank.global.config.FileConfig;
 import com.wc.hr_bank.mapper.BackupMapper;
 import com.wc.hr_bank.repository.BackupRepository;
 import com.wc.hr_bank.repository.ChangeLogRepository;
@@ -36,6 +34,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -48,6 +47,7 @@ public class BackupServiceImpl implements BackupService
     private final FileRepository fileRepository;
     private final EmployeeRepository employeeRepository;
     private final FileStorage fileStorage;
+    private final FileConfig fileConfig;
 
     private @Value("${hr-bank.file_directories.logs:./logs}") String root;
 
@@ -220,9 +220,11 @@ public class BackupServiceImpl implements BackupService
      */
     @Override
     public BackupDto getLatest(StatusType status) {
-        StatusType targetStatus = (status != null) ? status : StatusType.COMPLETED;
-
-        return backupRepository.findLatestByStatus(targetStatus)
+        return backupRepository.findAll().stream()
+                .filter(backup -> backup.getStatus().equals(status))
+                .sorted(Comparator.comparing(Backup::getEndedAt).reversed())
+                .limit(1)
+                .findFirst()
                 .map(backupMapper::toDto)
                 .orElseThrow(NoSuchElementException::new);
     }
@@ -245,7 +247,7 @@ public class BackupServiceImpl implements BackupService
      * @return 백업 결과 DTO
      */
     @Override
-    @Scheduled(cron = "${backup.batch.schedule.cron:0 0 * * * *}") // 간단하고 짧아서 따로 분리하지 않음.
+    @Scheduled(cron = "${backup.batch.schedule.cron:0 0 * * * *}")
     public BackupDto batchBackup() {
         return executeBackup("system");
     }
@@ -313,7 +315,7 @@ public class BackupServiceImpl implements BackupService
             Page<Employee> employeePage;
 
             do {
-                employeePage = employeeRepository.findAll(
+                employeePage = employeeRepository.findAllWithDepartmentForBackup(
                         PageRequest.of(pageNo++, pageSize)
                 );
 
@@ -333,8 +335,8 @@ public class BackupServiceImpl implements BackupService
             } while (employeePage.hasNext());
         }
 
-        String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        Path filePath = Paths.get(root + file.getId() + ".csv");
+        String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".csv";
+        Path filePath = fileConfig.getBackupPath().resolve(file.getId() + ".csv");
         Long fileSize = Files.size(filePath);
 
         file.update(fileName, "text/csv", fileSize, null);
@@ -349,7 +351,6 @@ public class BackupServiceImpl implements BackupService
      *
      * @param backup 백업 인스턴스
      */
-    @Transactional
     public BackupDto backupFailure(Backup backup, Instant startedAt, File csvfile, Exception e) {
         // STEP 4-2-1: 실패시 CSV 파일 삭제
         if (csvfile != null) {
@@ -358,7 +359,7 @@ public class BackupServiceImpl implements BackupService
 
         try {
             // 임시 엔티티 (임시 정보로 먼저 저장 -> ID 획득 -> 물리적 파일 생성 -> 최종 정보로 업데이트)
-            File logFile = new File("temp", "text/csv", 0L, null);
+            File logFile = new File("temp", "text/plain", 0L, null);
             fileRepository.save(logFile);
 
             try (OutputStream logs = fileStorage.save(logFile.getId(), ".log");
@@ -370,8 +371,8 @@ public class BackupServiceImpl implements BackupService
             }
 
             // STEP 4-2-2: 에러 로그를 .log 파일로 저장
-            String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-            Path filePath = Paths.get(root + logFile.getId() + ".log");
+            String fileName = startedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".text";
+            Path filePath = fileConfig.getLogPath().resolve(logFile.getId() + ".log");
             Long fileSize = Files.size(filePath);
 
             logFile.update(fileName, "text/plain", fileSize, null);
@@ -395,7 +396,6 @@ public class BackupServiceImpl implements BackupService
      * @param backup 백업 인스턴스
      * @param file .csv 파일
      */
-    @Transactional
     public BackupDto backupSuccess(Backup backup, File file) {
         backup.update(Instant.now(), file, StatusType.COMPLETED);
 
@@ -410,16 +410,20 @@ public class BackupServiceImpl implements BackupService
      * @return 백업 여부
      */
     private Boolean needsBackup() {
-        Instant lastEndedAt = backupRepository.findTopByOrderByEndedAtDesc();
-        Instant lastUpdatedAt = changeLogRepository.findTopByOrderByUpdatedAtDesc();
+        Instant lastEndedAt = backupRepository.findAll().stream()
+                .filter(backup -> backup.getEndedAt() != null)
+                .sorted(Comparator.comparing(Backup::getEndedAt).reversed())
+                .map(Backup::getEndedAt)
+                .limit(1)
+                .findFirst()
+                .orElse(Instant.EPOCH);
 
-        if (lastEndedAt == null) {
-            return true;
-        }
-
-        if (lastUpdatedAt == null) {
-            return true;
-        }
+        Instant lastUpdatedAt = changeLogRepository.findAll().stream()
+                .sorted(Comparator.comparing(ChangeLog::getUpdatedAt).reversed())
+                .map(ChangeLog::getUpdatedAt)
+                .limit(1)
+                .findFirst()
+                .orElse(Instant.EPOCH);
 
         return lastUpdatedAt.isAfter(lastEndedAt);
     }

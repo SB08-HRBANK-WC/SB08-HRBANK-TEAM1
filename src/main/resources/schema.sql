@@ -1,13 +1,15 @@
+CREATE SCHEMA IF NOT EXISTS hrbankdb;
+
 -- 테이블 삭제 (자식 부터)
-DROP TABLE IF EXISTS change_log_diff CASCADE;
+DROP TABLE IF EXISTS change_log_diffs CASCADE;
 DROP TABLE IF EXISTS change_logs CASCADE;
 DROP TABLE IF EXISTS backup_histories CASCADE;
 DROP TABLE IF EXISTS employees CASCADE;
 DROP TABLE IF EXISTS departments CASCADE;
 DROP TABLE IF EXISTS files CASCADE;
 
-DROP TYPE IF EXISTS employee_status;
-DROP TYPE IF EXISTS change_type;
+DROP TYPE IF EXISTS employee_status CASCADE;
+DROP TYPE IF EXISTS change_type CASCADE;
 
 CREATE TYPE employee_status AS ENUM ('ACTIVE', 'ON_LEAVE', 'RESIGNED');
 CREATE TYPE change_type AS ENUM ('CREATED', 'UPDATED', 'DELETED');
@@ -49,7 +51,7 @@ CREATE TABLE employees
     department_id       BIGINT REFERENCES departments(id) ON DELETE SET NULL
 );
 
-CREATE TABLE change_log
+CREATE TABLE IF NOT EXISTS change_log
 (
     id                  SERIAL PRIMARY KEY,
     target_id           BIGINT NOT NULL,
@@ -71,7 +73,7 @@ CREATE TABLE change_log_diffs
     log_id          BIGINT REFERENCES change_log(id) ON DELETE CASCADE
 );
 
-CREATE TABLE db_backup_history
+CREATE TABLE IF NOT EXISTS db_backup_history
 (
     id          SERIAL PRIMARY KEY,
     status      VARCHAR(20) NOT NULL CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'SKIPPED')),

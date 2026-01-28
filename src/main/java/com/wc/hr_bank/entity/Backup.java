@@ -18,14 +18,14 @@ public class Backup extends BaseEntity
     private String worker;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false)
     private StatusType status;
 
     @Column(name = "started_at", nullable = false)
-    private Instant started_at;
+    private Instant startedAt;
 
     @Column(name = "ended_at")
-    private Instant ended_at;
+    private Instant endedAt;
 
     @OneToOne(fetch = FetchType.LAZY)
     private File file;
@@ -33,13 +33,13 @@ public class Backup extends BaseEntity
     public Backup(String worker, StatusType status, Instant started_at, Instant ended_at) {
         this.worker = worker;
         this.status = status;
-        this.started_at = started_at;
-        this.ended_at = ended_at;
+        this.startedAt = started_at;
+        this.endedAt = ended_at;
     }
 
     public void update(Instant ended_at, File file, StatusType status) {
         if (ended_at != null) {
-            this.ended_at = ended_at;
+            this.endedAt = ended_at;
         }
         if (file != null) {
             this.file = file;

@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @RequiredArgsConstructor
 @RestController
@@ -32,13 +35,52 @@ public class BackupController implements BackupApi
 
     @GetMapping
     public ResponseEntity<BackupCursorPageResponseDto> getAllBackups(
-            String worker, StatusType statusType,
-            Instant startedAtFrom, Instant startedAtTo,
-            Long idAfter, int size,
-            String sortField, String sortDirection, String cursor)
+            String worker, StatusType status, String startedAtFrom, String startedAtTo, Long idAfter,
+            int size, String sortField, String sortDirection, String cursor)
     {
+        Instant from = null;
+        Instant to = null;
+
+        try {
+            if (startedAtFrom != null && !startedAtFrom.isBlank()) {
+                Instant parsedFrom = Instant.parse(startedAtFrom);
+
+                LocalDateTime kstDateTime = LocalDateTime.ofInstant(parsedFrom, ZoneId.of("Asia/Seoul"));
+                System.out.println("from을 KST로 변환: " + kstDateTime);
+
+                if (kstDateTime.getHour() == 0 && kstDateTime.getMinute() == 0 && kstDateTime.getSecond() == 0) {
+                    LocalDate targetDate = kstDateTime.toLocalDate();
+                    from = targetDate.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
+                    System.out.println("→ from: " + targetDate + " 00:00:00 KST = " + from + " UTC");
+                } else {
+                    from = parsedFrom;
+                    System.out.println("→ from (그대로): " + from);
+                }
+            }
+
+            if (startedAtTo != null && !startedAtTo.isBlank()) {
+                Instant parsedTo = Instant.parse(startedAtTo);
+
+                LocalDateTime kstDateTime = LocalDateTime.ofInstant(parsedTo, ZoneId.of("Asia/Seoul"));
+                System.out.println("to를 KST로 변환: " + kstDateTime);
+
+                if (kstDateTime.getHour() == 0 && kstDateTime.getMinute() == 0 && kstDateTime.getSecond() == 0) {
+                    LocalDate targetDate = kstDateTime.toLocalDate();
+                    to = targetDate.atTime(23, 59, 59, 999_999_999)
+                            .atZone(ZoneId.of("Asia/Seoul"))
+                            .toInstant();
+                    System.out.println("→ to: " + targetDate + " 23:59:59 KST = " + to + " UTC");
+                } else {
+                    to = parsedTo;
+                }
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
         BackupCursorPageRequest backupCursorPageRequest = new BackupCursorPageRequest(
-                worker, statusType, startedAtFrom, startedAtTo, idAfter, size, sortField, sortDirection, cursor
+                worker, status, from, to, idAfter, size, sortField, sortDirection, cursor
         );
 
         BackupCursorPageResponseDto responseDto = backupService.findAll(backupCursorPageRequest);

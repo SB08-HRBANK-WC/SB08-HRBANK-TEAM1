@@ -36,95 +36,92 @@ public class EmployeeController implements EmployeeApi
 
 {
 
-  private final EmployeeService employeeService;
+    private final EmployeeService employeeService;
 
-  @Override
-  @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<EmployeeDto> createEmployee(
-      @RequestPart("request") EmployeeCreateRequest request,
-      @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-      HttpServletRequest servletRequest)
+    @Override
+    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EmployeeDto> createEmployee(
+            @RequestPart("employee") EmployeeCreateRequest request,
+            @RequestPart(value = "profile", required = false) MultipartFile profileImage,
+            HttpServletRequest servletRequest)
 
-  {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(employeeService.createEmployee(request, profileImage, servletRequest));
-  }
+    {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(employeeService.createEmployee(request, profileImage, servletRequest));
+    }
 
-  @Override
-  @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-  public ResponseEntity<EmployeeDto> updateEmployee(
-      @PathVariable Long id,
-      @RequestPart("request") EmployeeUpdateRequest request,
-      @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-      HttpServletRequest servletRequest)
+    @Override
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EmployeeDto> updateEmployee(
+            @PathVariable Long id,
+            @RequestPart("employee") EmployeeUpdateRequest request,
+            @RequestPart(value = "profile", required = false) MultipartFile profileImage,
+            HttpServletRequest servletRequest)
 
-  {
-    return ResponseEntity.ok(employeeService.updateEmployee(id, request, profileImage, servletRequest));
-  }
+    {
+        return ResponseEntity.ok(employeeService.updateEmployee(id, request, profileImage, servletRequest));
+    }
 
-  @Override
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteEmployee(@PathVariable Long id, HttpServletRequest servletRequest)
-
-  {
-    employeeService.deleteEmployee(id, servletRequest);
-    // 명세서 규격: 삭제 성공 시 204 반환
-    return ResponseEntity.noContent().build();
-  }
+    @Override
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable Long id, HttpServletRequest servletRequest) {
+        employeeService.deleteEmployee(id, servletRequest);
+        return ResponseEntity.noContent().build();
+    }
 
 
-  @Override
-  @GetMapping("/{id}")
-  public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id)
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id)
 
-  {
-    return ResponseEntity.ok(employeeService.getEmployeeById(id));
-  }
+    {
+        return ResponseEntity.ok(employeeService.getEmployeeById(id));
+    }
 
-  /**
-   * 피드백 반영: 개별 파라미터 대신 EmployeeListRequest(Record)를 사용하여 코드를 단순화하고 서비스 계층으로 전달합니다.
-   */
-  @Override
-  @GetMapping
-  public ResponseEntity<CursorPageResponseEmployeeDto> getEmployees(@ModelAttribute EmployeeListRequest request)
+    /**
+     * 피드백 반영: 개별 파라미터 대신 EmployeeListRequest(Record)를 사용하여 코드를 단순화하고 서비스 계층으로 전달합니다.
+     */
+    @Override
+    @GetMapping
+    public ResponseEntity<CursorPageResponseEmployeeDto> getEmployees(@ModelAttribute EmployeeListRequest request)
 
-  {
-    CursorPageResponseEmployeeDto employees = employeeService.getEmployees(request);
-    return ResponseEntity.ok(employees);
-  }
+    {
+        CursorPageResponseEmployeeDto employees = employeeService.getEmployees(request);
+        return ResponseEntity.ok(employees);
+    }
 
-  /**
-   * 대시보드 관련
-   */
-  @GetMapping("/stats/distribution")
-  public ResponseEntity<List<EmployeeDistDto>> getEmployeesDist(
-      @RequestParam(defaultValue = "department") String groupBy,
-      @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status
-  ) {
-    List<EmployeeDistDto> result = employeeService.getEmployeesDist(groupBy, status);
+    /**
+     * 대시보드 관련
+     */
+    @GetMapping("/stats/distribution")
+    public ResponseEntity<List<EmployeeDistDto>> getEmployeesDist(
+            @RequestParam(defaultValue = "department") String groupBy,
+            @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status
+    ) {
+        List<EmployeeDistDto> result = employeeService.getEmployeesDist(groupBy, status);
 
-    return ResponseEntity.ok(result);
-  }
+        return ResponseEntity.ok(result);
+    }
 
-  @GetMapping("/count")
-  public ResponseEntity<Long> getEmployeeCount(
-      @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status,
-      @RequestParam(required = false) LocalDate fromDate,
-      @RequestParam(required = false) LocalDate toDate
-  ) {
-    Long result = employeeService.countByPeriod(status, fromDate, toDate);
+    @GetMapping("/count")
+    public ResponseEntity<Long> getEmployeeCount(
+            @RequestParam(defaultValue = "ACTIVE") EmployeeStatus status,
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate
+    ) {
+        Long result = employeeService.countByPeriod(status, fromDate, toDate);
 
-    return ResponseEntity.ok(result);
-  }
+        return ResponseEntity.ok(result);
+    }
 
-  @GetMapping("/stats/trend")
-  public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
-      @RequestParam(required = false) LocalDate fromDate,
-      @RequestParam(required = false) LocalDate toDate,
-      @RequestParam(defaultValue = "month") String unit
-  ) {
-    List<EmployeeTrendDto> result = employeeService.getEmployeeTrend(fromDate, toDate, unit);
+    @GetMapping("/stats/trend")
+    public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate,
+            @RequestParam(defaultValue = "month") String unit
+    ) {
+        List<EmployeeTrendDto> result = employeeService.getEmployeeTrend(fromDate, toDate, unit);
 
-    return ResponseEntity.ok(result);
-  }
+        return ResponseEntity.ok(result);
+    }
 }

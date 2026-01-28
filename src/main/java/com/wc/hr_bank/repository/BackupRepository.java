@@ -13,34 +13,15 @@ import java.util.Optional;
 
 public interface BackupRepository extends JpaRepository<Backup, Long>
 {
-    @Query(
-        """
-        SELECT dbh
-        FROM db_backup_history dbh
-        ORDER BY dbh.endedAt DESC
-        LIMIT 1
-        """)
-    Instant findTopByOrderByEndedAtDesc();
-
-    @Query(
-        """
-        SELECT dbh
-        FROM db_backup_history dbh
-        WHERE dbh.status = :status
-        ORDER BY dbh.endedAt DESC
-        LIMIT 1
-        """)
-    Optional<Backup> findLatestByStatus(@Param("status") StatusType status);
-
     // 첫 페이지
     @Query(
         """
-        SELECT dbh
-        FROM db_backup_history dbh
-        WHERE (:worker IS NULL OR dbh.worker LIKE :worker)
-        AND (:status IS NULL OR dbh.status = :status)
-        AND (:startedAtFrom IS NULL OR dbh.startedAt >= :startedAtFrom)
-        AND (:startedAtTo IS NULL OR dbh.startedAt <= :startedAtTo)
+        SELECT b
+        FROM Backup b
+        WHERE (:worker IS NULL OR b.worker LIKE :worker)
+        AND (:status IS NULL OR b.status = :status)
+        AND (CAST(:startedAtFrom AS timestamp) IS NULL OR b.startedAt >= :startedAtFrom)
+        AND (CAST(:startedAtTo AS timestamp ) IS NULL OR b.startedAt <= :startedAtTo)
         """)
     Page<Backup> findAllWithoutCursor(
             @Param("worker") String worker,
@@ -53,14 +34,14 @@ public interface BackupRepository extends JpaRepository<Backup, Long>
     // startedAt, ASC
     @Query(
         """
-        SELECT dbh
-        FROM db_backup_history dbh
-        WHERE (:worker IS NULL OR dbh.worker LIKE :worker)
-        AND (:status IS NULL OR dbh.status = :status)
-        AND (:startedAtFrom IS NULL OR dbh.startedAt >= :startedAtFrom)
-        AND (:startedAtTo IS NULL OR dbh.startedAt <= :startedAtTo)
-        AND (dbh.startedAt > :cursor
-                OR (dbh.startedAt = :cursor AND dbh.id >= :idAfter)
+        SELECT b
+        FROM Backup b
+        WHERE (:worker IS NULL OR b.worker LIKE :worker)
+        AND (:status IS NULL OR b.status = :status)
+        AND (CAST(:startedAtFrom AS timestamp ) IS NULL OR b.startedAt >= :startedAtFrom)
+        AND (CAST(:startedAtTo AS timestamp ) IS NULL OR b.startedAt <= :startedAtTo)
+        AND (b.startedAt > :cursor
+                OR (b.startedAt = CAST(:cursor AS java.time.Instant) AND b.id >= :idAfter)
         )
         """)
     Page<Backup> findAllWithCursorOrderByStartedAtAsc(
@@ -77,13 +58,13 @@ public interface BackupRepository extends JpaRepository<Backup, Long>
     @Query(
             """
             SELECT dbh
-            FROM db_backup_history dbh
+            FROM Backup dbh
             WHERE (:worker IS NULL OR dbh.worker LIKE :worker)
             AND (:status IS NULL OR dbh.status = :status)
-            AND (:startedAtFrom IS NULL OR dbh.startedAt >= :startedAtFrom)
-            AND (:startedAtTo IS NULL OR dbh.startedAt <= :startedAtTo)
+            AND (CAST(:startedAtFrom AS timestamp ) IS NULL OR dbh.startedAt >= :startedAtFrom)
+            AND (CAST(:startedAtTo AS timestamp ) IS NULL OR dbh.startedAt <= :startedAtTo)
             AND (dbh.startedAt < :cursor
-                    OR (dbh.startedAt = :cursor AND dbh.id <= :idAfter)
+                    OR (dbh.startedAt = CAST(:cursor AS java.time.Instant) AND dbh.id <= :idAfter)
             )
             """)
     Page<Backup> findAllWithCursorOrderByStartedAtDesc(
@@ -100,13 +81,13 @@ public interface BackupRepository extends JpaRepository<Backup, Long>
     @Query(
         """
         SELECT dbh
-        FROM db_backup_history dbh
+        FROM Backup dbh
         WHERE (:worker IS NULL OR dbh.worker LIKE :worker)
         AND (:status IS NULL OR dbh.status = :status)
-        AND (:startedAtFrom IS NULL OR dbh.startedAt >= :startedAtFrom)
-        AND (:startedAtTo IS NULL OR dbh.startedAt <= :startedAtTo)
+        AND (CAST(:startedAtFrom AS timestamp ) IS NULL OR dbh.startedAt >= :startedAtFrom)
+        AND (CAST(:startedAtTo AS timestamp ) IS NULL OR dbh.startedAt <= :startedAtTo)
         AND (dbh.endedAt > :cursor
-                OR (dbh.endedAt = :cursor AND dbh.id >= :idAfter)
+                OR (dbh.endedAt = CAST(:cursor AS java.time.Instant) AND dbh.id >= :idAfter)
         )
         """)
     Page<Backup> findAllWithCursorOrderByEndedAtAsc(
@@ -123,13 +104,13 @@ public interface BackupRepository extends JpaRepository<Backup, Long>
     @Query(
         """
         SELECT dbh
-        FROM db_backup_history dbh
+        FROM Backup dbh
         WHERE (:worker IS NULL OR dbh.worker LIKE :worker)
         AND (:status IS NULL OR dbh.status = :status)
-        AND (:startedAtFrom IS NULL OR dbh.startedAt >= :startedAtFrom)
-        AND (:startedAtTo IS NULL OR dbh.startedAt <= :startedAtTo)
-        AND (dbh.endedAt > :cursor
-                OR (dbh.endedAt = :cursor AND dbh.id <= :idAfter)
+        AND (CAST(:startedAtFrom AS timestamp ) IS NULL OR dbh.startedAt >= :startedAtFrom)
+        AND (CAST(:startedAtTo AS timestamp ) IS NULL OR dbh.startedAt <= :startedAtTo)
+        AND (dbh.endedAt < :cursor
+                OR (dbh.endedAt = CAST(:cursor AS java.time.Instant) AND dbh.id <= :idAfter)
         )
         """)
     Page<Backup> findAllWithCursorOrderByEndedAtDesc(

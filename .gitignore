@@ -1,4 +1,7 @@
 .gradle
+backups/
+logs/
+profiles/
 application-*.yaml
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -29,7 +32,6 @@ out/
 
 ### NetBeans ###
 /nbproject/private/
-/nbbuild/
 /nbbuild/
 /dist/
 /nbdist/
