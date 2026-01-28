@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.Instant;
 
 @Tag(name = "데이터 백업 관리", description = "데이터 백업 관리 API")
-public interface BackupApi
-{
+public interface BackupApi {
+
     @Operation(summary = "데이터 백업 생성", description = "데이터 백업을 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "백업 생성 성공", content = @Content(schema = @Schema(implementation = BackupDto.class))),
@@ -28,7 +28,7 @@ public interface BackupApi
             @ApiResponse(responseCode = "409", description = "이미 진행 중인 백업이 있음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    ResponseEntity<BackupDto> create(HttpServletRequest httpServletRequest);
+    ResponseEntity<BackupDto> create(HttpServletRequest request);
 
     @Operation(summary = "데이터 백업 목록 조회", description = "데이터 백업 목록을 조회합니다.")
     @ApiResponses(value = {
@@ -38,9 +38,9 @@ public interface BackupApi
     })
     ResponseEntity<BackupCursorPageResponseDto> getAllBackups(
             @Parameter(description = "작업자") @RequestParam(required = false) String worker,
-            @Parameter(description = "상태 (IN_PROGRESS, COMPLETED, FAILED)") @RequestParam(required = false) StatusType statusType,
-            @Parameter(description = "시작 시각(부터)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)Instant startedAtFrom,
-            @Parameter(description = "시작 시각(까지)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)Instant startedAtto,
+            @Parameter(description = "상태 (IN_PROGRESS, COMPLETED, FAILED)") @RequestParam(required = false) StatusType status,
+            @Parameter(description = "시작 시각(부터)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) String startedAtFrom,
+            @Parameter(description = "시작 시각(까지)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) String startedAtTo,
             @Parameter(description = "이전 페이지 마지막 요소 ID") @RequestParam(required = false)  Long idAfter,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "정렬 필드 (startedAt, endedAt, status") @RequestParam(defaultValue = "startedAt") String sortField,
@@ -48,6 +48,9 @@ public interface BackupApi
             @Parameter(description = "커서") @RequestParam(required = false) String cursor
     );
 
+    /**
+     * 상태별 최신 백업 조회
+     */
     @Operation(summary = "최근 백업 정보 조회", description = "지정된 상태의 가장 최근 백업 정보를 조회합니다. 상태를 지정하지 않으면 성공적으로 완료된(COMPLETED) 백업을 반환합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -55,5 +58,6 @@ public interface BackupApi
             @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 유효하지 않은 상태값", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     ResponseEntity<BackupDto> getLatestBackup(
-            @Parameter(description = "백업 상태 (COMPLETED, FAILED, IN_PROGRESS, 기본값: COMPLETED)") @RequestParam(defaultValue = "COMPLETED") StatusType statusType);
+            @Parameter(description = "백업 상태 (COMPLETED, FAILED, IN_PROGRESS, 기본값: COMPLETED)") @RequestParam(defaultValue = "COMPLETED") StatusType status
+    );
 }
