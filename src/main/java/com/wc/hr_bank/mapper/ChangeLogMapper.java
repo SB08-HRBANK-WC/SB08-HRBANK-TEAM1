@@ -14,64 +14,57 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface ChangeLogMapper
 {
-  @Mapping(
-      source = "updatedAt",
-      target = "at",
-      dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
-  @Mapping(
-      source = "diffs",
-      target = "profileImageId",
-      qualifiedByName = "extractProfileImageId"
-  )
-  ChangeLogDetailDto toDto(ChangeLog changeLog);
+    @Mapping(
+            expression = "java(changeLog.getUpdatedAt() == null ? null : changeLog.getUpdatedAt().toString())",
+            target = "at",
+            dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
+    @Mapping(target = "profileImageId", expression = "java(currentProfileImageId)")
+    ChangeLogDetailDto toDto(ChangeLog changeLog, Long currentProfileImageId);
 
-  /**
-   * 수정 이력 조회 content 출력
-   * @param changeLog
-   * @return
-   */
-  @Mapping(source = "createdAt", target = "at", dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
-  ChangeLogDto toLogDto(ChangeLog changeLog);
+    /**
+     * 수정 이력 조회 content 출력
+     * @param changeLog
+     * @return
+     */
+    @Mapping(source = "createdAt", target = "at", dateFormat = "yyyy-MM-dd'T'HH:mm:ss")
+    ChangeLogDto toLogDto(ChangeLog changeLog);
 
-  /**
-   * 수정 이력 조회 content 및 커서 및 부가정보 출력
-   * @param content
-   * @param nextCursor
-   * @param nextIdAfter
-   * @param size
-   * @param totalElements
-   * @param hasNext
-   * @return
-   */
-  CursorPageResponseChangeLogDto toCursorPageResponse(
-      List<ChangeLogDto> content,
-      String nextCursor,
-      Long nextIdAfter,
-      int size,
-      Long totalElements,
-      boolean hasNext
-  );
+    /**
+     * 수정 이력 조회 content 및 커서 및 부가정보 출력
+     * @param content
+     * @param nextCursor
+     * @param nextIdAfter
+     * @param size
+     * @param totalElements
+     * @param hasNext
+     * @return
+     */
+    CursorPageResponseChangeLogDto toCursorPageResponse(
+            List<ChangeLogDto> content,
+            String nextCursor,
+            Long nextIdAfter,
+            int size,
+            Long totalElements,
+            boolean hasNext
+    );
 
-  /**
-   * 상세 내역 리스트 변환
-   *
-   * @param diffs
-   * @return
-   */
-  List<DiffDto> toDiffDtoList(List<ChangeLogDiff> diffs);
+    /**
+     * 상세 내역 리스트 변환
+     *
+     * @param diffs
+     * @return
+     */
 
-  // 특정 필드(image) 찾아 ID 추출
-  @Named("extractProfileImageId")
-  default Long extractProfileImageId(List<ChangeLogDiff> diffs) {
-    if (diffs == null || diffs.isEmpty()) return null;
+    default List<DiffDto> toDiffDtoList(List<ChangeLogDiff> diffs) {
+        if (diffs == null) return List.of();
 
-    return diffs.stream()
-        .filter(diff -> "image".equals(diff.getPropertyName())) // 이미지 변경분 조회
-        .map(ChangeLogDiff::getAfter)
-        .filter(val -> val != null && !val.isBlank() && !val.equals("null"))
-        .map(Long::valueOf) // String을 Long으로 변환
-        .findFirst()
-        .orElse(null);
-  }
+        return diffs.stream()
+                .filter(diff -> !"image".equals(diff.getPropertyName())) // 1. "image" 프로퍼티 제외
+                .map(diff -> new DiffDto(
+                        diff.getPropertyName(),
+                        diff.getBefore(),
+                        diff.getAfter()
+                ))
+                .toList();
+    }
 }
-

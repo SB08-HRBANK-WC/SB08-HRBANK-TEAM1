@@ -13,6 +13,7 @@ import com.wc.hr_bank.entity.LogPropertyType;
 import com.wc.hr_bank.entity.base.BaseEntity;
 import com.wc.hr_bank.mapper.ChangeLogMapper;
 import com.wc.hr_bank.repository.ChangeLogRepository;
+import com.wc.hr_bank.repository.EmployeeRepository;
 import com.wc.hr_bank.service.ChangeLogService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
@@ -33,287 +34,301 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ChangeLogServiceImpl implements ChangeLogService
 {
-  private final ChangeLogRepository changeLogRepository;
-  private final ChangeLogMapper changeLogMapper;
+    private final ChangeLogRepository changeLogRepository;
+    private final ChangeLogMapper changeLogMapper;
+    private final EmployeeRepository employeeRepository;
 
-  private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+    public static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
 
-  /**
-   * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
-   * @param request
-   * @return
-   */
-  @Override
-  public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request) {
-    Pageable pageable = PageRequest.of(0, request.size() + 1);
+    /**
+     * 직원 정보 수정 이력 목록 조회 (커서 페이지네이션)
+     * @param request
+     * @return
+     */
+    @Override
+    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogRequest request) {
+        Pageable pageable = PageRequest.of(0, request.size() + 1);
 
-    // 정렬 필드 - ipAddress, at
-    String sortField = request.sortField();
-    // 정렬 방향 - asc, desc
-    String sortDirection = request.sortDirection();
+        // 정렬 필드 - ipAddress, at
+        String sortField = request.sortField();
+        // 정렬 방향 - asc, desc
+        String sortDirection = request.sortDirection();
 
-    List<ChangeLog> logs = List.of();
+        List<ChangeLog> logs = List.of();
 
-    String employeeNumber = request.employeeNumber();
-    ChangeType type = request.type();
-    String memo = request.memo();
-    String ipAddress = request.ipAddress();
+        String employeeNumber = request.employeeNumber();
+        ChangeType type = request.type();
+        String memo = request.memo();
+        String ipAddress = request.ipAddress();
 
-    Instant atFrom = convertToInstant(request.atFrom());
-    Instant atTo = convertToInstant(request.atTo());
+        Instant atFrom = (request.atFrom() != null) ? request.atFrom().toInstant() : null;
+        Instant atTo = (request.atTo() != null) ? request.atTo().toInstant() : null;
 
-    Long idAfter = request.idAfter();
-    String cursor = request.cursor();
+        Long idAfter = request.idAfter();
+        String cursor = request.cursor();
 
-    logs = switch (sortField) {
-      case "at" -> {
-        Instant cursorAt = (cursor != null && !cursor.isBlank())
-            ? convertToInstant(LocalDateTime.parse(request.cursor()))
-            : null;
+        logs = switch (sortField) {
+            case "at" -> {
+                Instant cursorAt = (cursor != null && !cursor.isBlank())
+                        ? Instant.parse(cursor)
+                        : null;
 
-        yield "desc".equals(sortDirection)
-            ? changeLogRepository.findByAtDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable)
-            : changeLogRepository.findByAtAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable);
-      }
+                yield "desc".equals(sortDirection)
+                        ? changeLogRepository.findByAtDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable)
+                        : changeLogRepository.findByAtAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursorAt, idAfter, pageable);
+            }
 
-      case "ipAddress" -> "desc".equals(sortDirection)
-            ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
-            : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
-      default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다: " + sortField);
-    };
+            case "ipAddress" -> "desc".equals(sortDirection)
+                    ? changeLogRepository.findByIpDesc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable)
+                    : changeLogRepository.findByIpAsc(employeeNumber, type, memo, ipAddress, atFrom, atTo, cursor, idAfter, pageable);
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다: " + sortField);
+        };
 
-    boolean hasNext = logs.size() > request.size();
+        boolean hasNext = logs.size() > request.size();
 
-    List<ChangeLog> resultLogs = hasNext
-        ? logs.subList(0, request.size())
-        : logs;
+        List<ChangeLog> resultLogs = hasNext
+                ? logs.subList(0, request.size())
+                : logs;
 
-    List<ChangeLogDto> content = resultLogs.stream()
-        .map(changeLogMapper::toLogDto)
-        .toList();
+        List<ChangeLogDto> content = resultLogs.stream()
+                .map(changeLogMapper::toLogDto)
+                .toList();
 
-    Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
+        Long totalElements = changeLogRepository.countByFilters(employeeNumber, type, memo, ipAddress, atFrom, atTo);
 
-    return buildResponse(content, sortField, request.size(), totalElements, hasNext);
-  }
-
-  /**
-   * DateTime -> Instant 변환
-   * @param datetime
-   * @return
-   */
-  private Instant convertToInstant(LocalDateTime datetime) {
-    if (datetime == null) {
-      return null;
+        return buildResponse(content, sortField, request.size(), totalElements, hasNext);
     }
-    Instant instant = datetime.atZone(KOREA_ZONE).toInstant();
-    return instant;
-  }
 
-  /**
-   * 커서 관련 헬퍼 메서드
-   * @param content
-   * @param sortField
-   * @param size
-   * @param totalElements
-   * @param hasNext
-   * @return
-   */
-  private CursorPageResponseChangeLogDto buildResponse(
-      List<ChangeLogDto> content,
-      String sortField, int size,
-      Long totalElements, boolean hasNext) {
-
-      String nextCursor = null;
-      Long nextIdAfter = 0L;
-
-      if (!content.isEmpty()) {
-        ChangeLogDto lastItem = content.get(content.size() - 1);
-        nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
-        nextIdAfter = lastItem.id();
-      }
-      return changeLogMapper.toCursorPageResponse(
-          content,
-          nextCursor,
-          nextIdAfter,
-          size,
-          totalElements,
-          hasNext
-      );
-  }
-
-  /**
-   * 특정 이력 상세 정보 조회
-   * @param id  이력 ID
-   * @return    상세 조회 DTO
-   */
-  @Override
-  public ChangeLogDetailDto getChangeLogDetail(Long id) {
-    return changeLogRepository.findWithDiffsById(id)
-        .map(changeLogMapper::toDto)
-        .orElseThrow(() -> new EntityNotFoundException("해당 이력을 찾을 수 없습니다."));
-  }
-
-  /**
-   * 기간 별 수정 이력 개수 조회
-   * @param from
-   * @param to
-   * @return
-   */
-  @Override
-  public Long countByPeriod(LocalDateTime from, LocalDateTime to) {
-    Instant fromInstant = convertToInstant(from);
-    Instant toInstant = convertToInstant(to);
-    return changeLogRepository.countLogsByPeriod(fromInstant, toInstant);
-  }
-
-  /**
-   * 직원 생성 (수정 이력)
-   * @param e
-   * @param ip
-   * @param memo
-   */
-  @Override
-  @Transactional
-  public void recordRegistration(Employee e, String ip, String memo) {
-    processRecording(null, e, ip, memo, ChangeType.CREATED);
-  }
-
-  /**
-   * 직원 수정 (수정 이력)
-   * @param oldEmp
-   * @param newEmp
-   * @param ip
-   * @param memo
-   */
-  @Override
-  @Transactional
-  public void recordModification(Employee oldEmp, Employee newEmp, String ip, String memo) {
-    processRecording(oldEmp, newEmp, ip, memo, ChangeType.UPDATED);
-  }
-
-  /**
-   * 직원 삭제 (수정 이력)
-   * @param e
-   * @param ip
-   * @param memo
-   */
-  @Override
-  @Transactional
-  public void recordRemoval(Employee e, String ip, String memo) {
-    processRecording(e, null, ip, memo, ChangeType.DELETED);
-  }
-
-  /**
-   * 전체적인 세팅 및 저장
-   * @param oldE
-   * @param newE
-   * @param ip
-   * @param memo
-   * @param type
-   */
-  private void processRecording(Employee oldE, Employee newE, String ip, String memo, ChangeType type) {
-    Employee target = (type == ChangeType.DELETED) ? oldE : newE;
-
-    ChangeLog changeLog = createBaseLog(target, ip, memo, type);
-
-    saveLog(changeLog, oldE, newE, type);
-
-    changeLogRepository.save(changeLog);
-  }
-
-  /**
-   * 필드 별 비교 및 추가
-   * @param log
-   * @param oldE
-   * @param newE
-   * @param type
-   */
-  private void saveLog(ChangeLog log, Employee oldE, Employee newE, ChangeType type) {
-    compareAndRecord(log, LogPropertyType.EMPLOYEE_NAME, oldE, newE, Employee::getName, type);
-
-    compareAndRecord(log, LogPropertyType.EMPLOYEE_NUMBER, oldE, newE, Employee::getEmployeeNumber, type);
-
-    compareAndRecord(log, LogPropertyType.EMAIL, oldE, newE, Employee::getEmail, type);
-
-    compareAndRecord(log, LogPropertyType.POSITION, oldE, newE, Employee::getPosition, type);
-
-    compareAndRecord(log, LogPropertyType.HIRE_DATE, oldE, newE, Employee::getHireDate, type);
-
-    compareAndRecord(log, LogPropertyType.STATUS, oldE, newE, Employee::getStatus, type);
-
-    compareAndRecord(log, LogPropertyType.DEPARTMENT, oldE, newE,
-        emp -> Optional.ofNullable(
-            emp.getDepartment())
-            .map(Department::getName)
-            .orElse(null), type);
-
-    compareAndRecord(log, LogPropertyType.PROFILE_IMAGE, oldE, newE,
-        emp -> Optional.ofNullable(
-            emp.getProfileImage())
-            .map(BaseEntity::getId)
-            .orElse(null), type);
-  }
-
-  /**
-   * 엔티티의 특정 속성 변화를 감지하고 변경 이력을 기록
-   * @param changeLog
-   * @param property
-   * @param oldEmp
-   * @param newEmp
-   * @param extractor
-   * @param type
-   */
-  private void compareAndRecord(
-      ChangeLog changeLog,
-      LogPropertyType property,
-      Employee oldEmp,
-      Employee newEmp,
-      Function<Employee, Object> extractor,
-      ChangeType type
-  ) {
-
-    String beforeValue = transform(oldEmp, extractor);
-    String afterValue = transform(newEmp, extractor);
-
-    if (beforeValue == null && afterValue == null) return;
-
-    boolean isDifferent = !Objects.equals(beforeValue, afterValue);
-
-    if (type != ChangeType.UPDATED || isDifferent) {
-      changeLog.addDiff(property, beforeValue, afterValue);
+    /**
+     * DateTime -> Instant 변환
+     * @param datetime
+     * @return
+     */
+    private Instant convertToInstant(LocalDateTime datetime) {
+        if (datetime == null) {
+            return null;
+        }
+        Instant instant = datetime.atZone(KOREA_ZONE).toInstant();
+        return instant;
     }
-  }
 
-  /**
-   * 함수형 헬퍼 메서드 -> 값 필터링
-   * @param target
-   * @param mapper
-   * @return
-   * @param <T>
-   * @param <R>
-   */
-  private <Employee, R> String transform(Employee target, Function<Employee, R> mapper) {
-    return Optional.ofNullable(target)
-        .map(mapper)
-        .map(String::valueOf)
-        .orElse(null);
-  }
+    /**
+     * 커서 관련 헬퍼 메서드
+     * @param content
+     * @param sortField
+     * @param size
+     * @param totalElements
+     * @param hasNext
+     * @return
+     */
+    private CursorPageResponseChangeLogDto buildResponse(
+            List<ChangeLogDto> content,
+            String sortField, int size,
+            Long totalElements, boolean hasNext) {
 
-  /**
-   * 기본 ChangeLog 세팅
-   * @param e
-   * @param ip
-   * @param memo
-   * @param changeType
-   * @return
-   */
-  private ChangeLog createBaseLog(Employee e, String ip, String memo, ChangeType changeType) {
-    return ChangeLog.create(e.getId(),
-        e.getName(),
-        e.getEmployeeNumber(),
-        memo,
-        changeType,
-        ip);
-  }
+        String nextCursor = null;
+        Long nextIdAfter = 0L;
+
+        if (!content.isEmpty()) {
+            ChangeLogDto lastItem = content.get(content.size() - 1);
+            nextCursor = (sortField.equals("ipAddress")) ? lastItem.ipAddress() : lastItem.at();
+            nextIdAfter = lastItem.id();
+        }
+        return changeLogMapper.toCursorPageResponse(
+                content,
+                nextCursor,
+                nextIdAfter,
+                size,
+                totalElements,
+                hasNext
+        );
+    }
+
+    /**
+     * 특정 이력 상세 정보 조회
+     * @param id  이력 ID
+     * @return    상세 조회 DTO
+     */
+    @Override
+    public ChangeLogDetailDto getChangeLogDetail(Long id) {
+        ChangeLog log = changeLogRepository.findWithDiffsById(id)
+                .orElseThrow(() -> new EntityNotFoundException("해당 이력을 찾을 수 없습니다."));
+
+        // 최신 직원 프로필 이미지 id 조회
+        Long employeeId = log.getTargetId();
+
+        Long currentProfileImageId = employeeRepository.findById(employeeId)
+                .map(Employee::getProfileImage)
+                .map(BaseEntity::getId)
+                .orElse(null);
+
+        return changeLogMapper.toDto(log, currentProfileImageId);
+    }
+
+    /**
+     * 기간 별 수정 이력 개수 조회
+     * @param from
+     * @param to
+     * @return
+     */
+    @Override
+    public Long countByPeriod(LocalDateTime from, LocalDateTime to) {
+        Instant fromInstant = convertToInstant(from);
+        Instant toInstant = convertToInstant(to);
+        return changeLogRepository.countLogsByPeriod(fromInstant, toInstant);
+    }
+
+    /**
+     * 직원 생성 (수정 이력)
+     * @param e
+     * @param ip
+     * @param memo
+     */
+    @Override
+    @Transactional
+    public void recordRegistration(Employee e, String ip, String memo) {
+        processRecording(null, e, ip, memo, ChangeType.CREATED);
+    }
+
+    /**
+     * 직원 수정 (수정 이력)
+     * @param oldEmp
+     * @param newEmp
+     * @param ip
+     * @param memo
+     */
+    @Override
+    @Transactional
+    public void recordModification(Employee oldEmp, Employee newEmp, String ip, String memo) {
+        processRecording(oldEmp, newEmp, ip, memo, ChangeType.UPDATED);
+    }
+
+    /**
+     * 직원 삭제 (수정 이력)
+     * @param e
+     * @param ip
+     * @param memo
+     */
+    @Override
+    @Transactional
+    public void recordRemoval(Employee e, String ip, String memo) {
+        processRecording(e, null, ip, memo, ChangeType.DELETED);
+    }
+
+    /**
+     * 전체적인 세팅 및 저장
+     * @param oldE
+     * @param newE
+     * @param ip
+     * @param memo
+     * @param type
+     */
+    private void processRecording(Employee oldE, Employee newE, String ip, String memo, ChangeType type) {
+        Employee target = (type == ChangeType.DELETED) ? oldE : newE;
+
+        ChangeLog changeLog = createBaseLog(target, ip, memo, type);
+
+        saveLog(changeLog, oldE, newE, type);
+
+        changeLogRepository.save(changeLog);
+    }
+
+    /**
+     * 필드 별 비교 및 추가
+     * @param log
+     * @param oldE
+     * @param newE
+     * @param type
+     */
+    private void saveLog(ChangeLog log, Employee oldE, Employee newE, ChangeType type) {
+        compareAndRecord(log, LogPropertyType.EMPLOYEE_NAME, oldE, newE, Employee::getName, type);
+
+        compareAndRecord(log, LogPropertyType.EMPLOYEE_NUMBER, oldE, newE, Employee::getEmployeeNumber, type);
+
+        compareAndRecord(log, LogPropertyType.EMAIL, oldE, newE, Employee::getEmail, type);
+
+        compareAndRecord(log, LogPropertyType.POSITION, oldE, newE, Employee::getPosition, type);
+
+        compareAndRecord(log, LogPropertyType.HIRE_DATE, oldE, newE, Employee::getHireDate, type);
+
+        compareAndRecord(log, LogPropertyType.STATUS, oldE, newE, Employee::getStatus, type);
+
+        compareAndRecord(log, LogPropertyType.DEPARTMENT, oldE, newE,
+                emp -> Optional.ofNullable(
+                                emp.getDepartment())
+                        .map(Department::getName)
+                        .orElse(null), type);
+
+        compareAndRecord(log, LogPropertyType.PROFILE_IMAGE, oldE, newE,
+                emp -> Optional.ofNullable(
+                                emp.getProfileImage())
+                        .map(BaseEntity::getId)
+                        .orElse(null), type);
+    }
+
+    /**
+     * 엔티티의 특정 속성 변화를 감지하고 변경 이력을 기록
+     * @param changeLog
+     * @param property
+     * @param oldEmp
+     * @param newEmp
+     * @param extractor
+     * @param type
+     */
+    private void compareAndRecord(
+            ChangeLog changeLog,
+            LogPropertyType property,
+            Employee oldEmp,
+            Employee newEmp,
+            Function<Employee, Object> extractor,
+            ChangeType type
+    ) {
+
+        String beforeValue = transform(oldEmp, extractor);
+        String afterValue = transform(newEmp, extractor);
+
+        if (beforeValue == null && afterValue == null) return;
+
+        boolean isDifferent = !Objects.equals(beforeValue, afterValue);
+
+        if (type != ChangeType.UPDATED || isDifferent) {
+
+            boolean isExcludedNumber = (type == ChangeType.UPDATED && property.equals(LogPropertyType.EMPLOYEE_NUMBER));
+
+            if (!isExcludedNumber) {
+                changeLog.addDiff(property, beforeValue, afterValue);
+            }
+        }
+    }
+
+    /**
+     * 함수형 헬퍼 메서드 -> 값 필터링
+     * @param target
+     * @param mapper
+     * @return
+     * @param <R>
+     */
+    private <Employee, R> String transform(Employee target, Function<Employee, R> mapper) {
+        return Optional.ofNullable(target)
+                .map(mapper)
+                .map(String::valueOf)
+                .orElse(null);
+    }
+
+    /**
+     * 기본 ChangeLog 세팅
+     * @param e
+     * @param ip
+     * @param memo
+     * @param changeType
+     * @return
+     */
+    private ChangeLog createBaseLog(Employee e, String ip, String memo, ChangeType changeType) {
+        return ChangeLog.create(e.getId(),
+                e.getName(),
+                e.getEmployeeNumber(),
+                memo,
+                changeType,
+                ip);
+    }
 }
