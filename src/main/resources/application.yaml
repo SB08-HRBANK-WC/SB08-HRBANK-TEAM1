@@ -13,10 +13,16 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   datasource:
-    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require
     driver-class-name: org.postgresql.Driver
     username: ${PGUSER}
     password: ${PGPASSWORD}
+    hikari:
+      connection-timeout: 60000
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      leak-detection-threshold: 60000
 
 # Swagger(SpringDoc) 설정
 springdoc:
