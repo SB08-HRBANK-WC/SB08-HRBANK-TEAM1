@@ -1,6 +1,8 @@
 package com.wc.hr_bank.dto.request.employee;
 
 import com.wc.hr_bank.entity.EmployeeStatus;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDate;
 
 /**
@@ -11,7 +13,9 @@ public record EmployeeListRequest(
     String employeeNumber,
     String departmentName,
     String position,
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     LocalDate hireDateFrom,
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     LocalDate hireDateTo,
     EmployeeStatus status,
     Long idAfter,

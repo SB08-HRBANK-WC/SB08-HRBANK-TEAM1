@@ -32,7 +32,7 @@ public class Employee extends BaseUpdatableEntity
   @JoinColumn(name = "department_id", nullable = false)
   private Department department;
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JoinColumn(name = "file_id")
   private File profileImage;
 
