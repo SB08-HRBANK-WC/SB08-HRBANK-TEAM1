@@ -1,6 +1,8 @@
 spring:
   application:
     name: hr_bank
+  profiles:
+    active: dev
 
   # JPA 및 Hibernate 로그 설정
   jpa:
